@@ -9,8 +9,8 @@
 
 // TOP
 
-#define FPS 60
-#define frame_useconds (1000000 / FPS)
+// #define FPS 144
+// #define frame_useconds (1000000 / FPS)
 
 #include <stdio.h>
 
@@ -299,14 +299,35 @@ system_get_proc_sig(){
     return((Void_Func*)(GetProcAddress(lib, proc_name)));
 }
 
-////////////////////////////////
+//-
 
 internal void
 system_schedule_step(u32 code){
     PostMessage(win32vars.window_handle, WM_4coder_ANIMATE, code, 0);
 }
 
-////////////////////////////////
+//-
+
+// NOTE(jack): Query win32 API to get montior refresh rate.
+internal u64
+win32_get_frame_rate() {
+    u64 frame_rate = 60;
+    
+    DEVMODE device_mode = { 0 };
+    // memset(&device_mode, 0, sizeof(DEVMODE));
+    device_mode.dmSize = sizeof(DEVMODE);
+    device_mode.dmDriverExtra = 0;
+    
+    // If the Display settings can be retrieved use the device's refresh rate
+    if(EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &device_mode) != 0){
+        frame_rate = device_mode.dmDisplayFrequency;
+    }
+    
+    return frame_rate;
+}
+
+
+//-
 
 internal void
 win32_toggle_fullscreen(){
@@ -369,7 +390,7 @@ system_set_key_mode_sig(){
     win32vars.key_mode = mode;
 }
 
-////////////////////////////////
+//-
 // NOTE(allen): Clipboard
 
 internal String_Const_u8
@@ -870,7 +891,7 @@ win32_free_object(Win32_Object *object){
     dll_insert(&win32vars.free_win32_objects, &object->node);
 }
 
-////////////////////////////////
+//-
 
 internal
 system_now_time_sig(){
@@ -977,7 +998,7 @@ system_sleep_sig(){
     Sleep(milliseconds);
 }
 
-////////////////////////////////
+//-
 
 internal DWORD CALL_CONVENTION
 win32_thread_wrapper(void *ptr){
@@ -1117,7 +1138,7 @@ system_condition_variable_free_sig(){
     }
 }
 
-////////////////////////////////
+//-
 
 internal LRESULT CALL_CONVENTION
 win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
@@ -1415,7 +1436,7 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
     return(result);
 }
 
-////////////////////////////////
+//-
 
 internal b32
 win32_wgl_good(Void_Func *f){
@@ -1664,7 +1685,7 @@ win32_gl_create_window(HWND *wnd_out, HGLRC *context_out, DWORD style, RECT rect
     return(result);
 }
 
-////////////////////////////////
+//-
 
 int CALL_CONVENTION
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
@@ -2006,6 +2027,11 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     SetForegroundWindow(win32vars.window_handle);
     SetActiveWindow(win32vars.window_handle);
     ShowWindow(win32vars.window_handle, SW_SHOW);
+    
+    //- @Added by jack
+    u64 frame_rate = win32_get_frame_rate();
+    u64 frame_useconds = (1000000 / frame_rate);
+    //-
     
     win32vars.global_frame_mutex = system_mutex_make();
     system_acquire_global_frame_mutex(win32vars.tctx);

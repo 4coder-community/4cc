@@ -335,6 +335,7 @@ system_get_file_list_sig(){
             result.infos[counter] = node;
             counter += 1;
         }
+        FindClose(search);
     }
     
     return(result);
@@ -474,7 +475,7 @@ color_picker_hook(HWND Window, UINT Message, WPARAM WParam, LPARAM LParam){
             if(GetDlgCtrlID(swatch_window) == 0x2c5)
             {
                 CHOOSECOLORW *win32_params =
-                    (CHOOSECOLORW *)GetWindowLongPtr(Window, GWLP_USERDATA);
+                (CHOOSECOLORW *)GetWindowLongPtr(Window, GWLP_USERDATA);
                 if(win32_params)
                 {
                     Color_Picker *picker = (Color_Picker*)win32_params->lCustData;

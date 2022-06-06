@@ -295,6 +295,9 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
     i32 first_index = (i32)(scroll_y/block_height);
     y_pos += first_index*block_height;
     
+    i32 max_count = first_index + lister->visible_count + 3;
+    count = clamp_top(lister->filtered.count, max_count);
+    
     for (i32 i = first_index; i < count; i += 1){
         Lister_Node *node = lister->filtered.node_ptrs[i];
         

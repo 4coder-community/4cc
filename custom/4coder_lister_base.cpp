@@ -295,9 +295,6 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
     i32 first_index = (i32)(scroll_y/block_height);
     y_pos += first_index*block_height;
     
-    i32 max_count = first_index + lister->visible_count + 3;
-    count = clamp_top(lister->filtered.count, max_count);
-    
     for (i32 i = first_index; i < count; i += 1){
         Lister_Node *node = lister->filtered.node_ptrs[i];
         
@@ -305,6 +302,7 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         y_pos = y.max;
         
         Rect_f32 item_rect = Rf32(x, y);
+        if (item_rect.y0 > region.y1) { break; }
         Rect_f32 item_inner = rect_inner(item_rect, 3.f);
         
         b32 hovered = rect_contains_point(item_rect, m_p);

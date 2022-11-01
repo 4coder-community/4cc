@@ -142,7 +142,7 @@ char **platform_includes[Platform_COUNT][Compiler_COUNT] = {
     {0                      , 0                     , mac_clang_platform_inc},
 };
 
-char *default_custom_target = "../code/custom/4coder_default_bindings.cpp";
+char *default_custom_target = "../4cc/custom/4coder_default_bindings.cpp";
 
 // NOTE(allen): Build flags
 

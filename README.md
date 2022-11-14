@@ -57,7 +57,9 @@ SOFTWARE.
 6. A. On windows run "bin\build.bat"
    B. On linux run "bin\build-linux.sh"
    C. On linux run "bin\build-mac.sh"
+7. Copy the files in 4coder-non-source/dist_files into the build folder created, you'll need at least the fonts folder. You only have to do this once
 
+Note: If you need to extend the 4ed api, you can run "bin\build_full.bat".
 
 # Notes on Major Issues
 

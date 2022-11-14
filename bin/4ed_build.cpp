@@ -569,6 +569,18 @@ build_main(Arena *arena, char *cdir, b32 update_local_theme, u32 flags, u32 arch
         fm_clear_folder(themes_folder);
         fm_make_folder_if_missing(arena, themes_folder);
         fm_copy_all(source_themes_folder, themes_folder);
+
+        char *config_files[] = { "ship_files/bindings.4coder",
+                                "../build/bindings.4coder", 
+                                "ship_files/mac-bindings.4coder", 
+                                "../build/mac-bindings.4coder", 
+                                "ship_files/config.4coder",
+                                "../build//config.4coder" };
+
+        for(u32 i = 0; i < ArrayCount(config_files); i +=2) {
+            fm_copy_file(config_files[i], config_files[i + 1]);
+        }
+
     }
     
     fflush(stdout);

@@ -1,0 +1,389 @@
+
+4.1.8
+ + Fix: unreliable clipboard reading on windows
+
+4.1.8
+ + On command line "-U <path>" sets the user directory
+ + On command line "-L" "> log.txt" to get a startup log
+ + The 4coder_fleury layer is now bundled with 4coder; run with '4ed -U 4coder_fleury'
+ + New commands 'project_command_F1' ... 'project_command_F16' can be directly bound
+   in key bindings.
+ + In a project "fkey_command_override" can contain labeled sets ".name = { ... }"
+   which override the fkey commands for a particular user;
+   "user_name" from config.4coder is used to decide which override set to apply
+ + Fix: indent bug inside parantheses
+ + Fix: window title after project loading works again
+ + Fix: parsing the parameter of #include
+ + Fix: handle spaces in buildsuper build paths
+ + Fix: make backspace alphanumeric boundary work on UTF-8
+ + Fix: push_buffer_line now cuts out an extra carriage return at the end
+
+4.1.7
+ + Core string hash features "save_string" "read_string"
+ + Added lookup acceleration to code index data
+ + Added highlighting for functions, types, and macros in code index
+ + Default input is now dispatched through an "implicit map" callback
+ + Audio system API and default audio mixer with examples in 4coder_examples.cpp
+ + Standard search list for loading custom DLL, config, fonts, themes and more
+    Search order: loaded project's path, "user path", binary path
+ + Fix: crash when pasting in read only buffer
+ + Fix: crash when closing cli output buffer
+
+4.1.6
+ + In config.4coder "bind_by_physical_key" uses a key-layout that does not change with language
+ + Deprecated GlyphFlag_Rotate90, rotation of immediate mode text is entirely derived from the delta vector
+ + New API view_(set/get)_camera_bounds, controls the margin and push in values when the cursor is out of view
+ + Durring isearch the vertical margin is extended to make text above/below the cursor visible
+ + Fix: notepad like mode scrolling only creates selection when holding mouse L-buttoon
+ + Fix: on windows the window has the 4coder icon
+ + Fix: various keyboard input issues on windows, linux, and mac
+ + Fix: by default platform layer uses key codes arranged by the system language
+ + Fix: printing for list_all_functions_* commands skips whitespace and controls format directly
+
+4.1.5
+ + MAJOR: Scratch_Blocks now take arena pointer parameters in their constructor to specify arenas that should be treated as having distinct lifetimes, without doing this it is possible that a local scratch and another arena will actually refer to the same allocator and freeing the local scratch will also free memory that was meant to be in a separate arena.
+ + MAJOR: HookID_BufferEditRange now takes the "old_cursor_range" instead of the "original_size"
+ + Date_Time system APIs, and Date_Time string formatting
+ + 'clean_all_lines' removes trailing whitespace and removes blank lines
+ + 'clean_trailing_whitespace' leaves blank lines
+ + In config.4coder "enable_output_wrapping" determine whether to wrap buffers like *compilation*, *search*, etc.
+ + In config.4coder "default_tab_width" determines the width of a tab character in number of spaces
+ + In config.4coder "cursor_roundness" "lister_roundness" "mark_thickness"
+ + The lister text field keeps the right hand side in view when the string gets too long to fit
+ + Hook called whenever a view's buffer is changed
+ + 'quick_swap_buffer` command bound to [ Backslash Alt ] and on mac [ Backslash Command ]
+ + Record_Info now reports a pos_before_edit member - which is not gauranteed to be accurate but is when it can be,
+   and when it can't be is based at the first character of the edit range
+ + When undoing a string it briefly fades away; controlled by config.4coder "enable_undo_fade_out"
+ + Fix: when generated/metadata* files are missing buildsuper still succeeds
+ + Fix: mac does not hang opening multiple files
+ + Fix: line number margin performance
+ + Fix: no crash in notepad like mode when replacing a highlighted range in a parsed file
+ + Fix: no thread handle leak when closing a view
+ + Fix: no crash when a project file .cmd is not the right type
+ + Fix: windows layer now generates layout independent key stroke events
+ + Fix: notepad like mode scrolling does not snap mark to cursor
+ + Fix: special case colors from the theme override general case colors
+ + Fix: paste fade range is updated with buffer edits
+ + Fix: on windows releasing click off window is detected
+ + Fix: on mac mouse scroll wheel is handled with extra multipliers
+ + Fix: on mac full screen flag -F does not cause a crash
+ + Fix: on mac handles diacritical text input via dead keys
+ + Fix: auto-indenting multi-line tokens does not shift them for being in incomplete statements.
+ + Fix: lexer does not exit a line continuation from backslash when it is followed by a CR
+ + Fix: lexer understands backslash at end of single line comment as continuation to next line
+
+4.1.4
+ + MAJOR: The clipboard history is now a fully custom layer implemented system. Users maintaining a customization layer should try to update their call sites to the old clipboard API. #define FCODER_TRANSITION_TO 4001004 to disable the transitional function wrappers when you are ready to make the transition.
+ + buildsuper scripts now all come with '-win' '-linux' '-mac' postfixes and pass their OS identifier macro on the build line
+ + clipboard is only read when the requests to, or when the collect-all mode is started via the command 'begin_clipboard_collection_mode'
+ + 'clear_clipboard' command
+ + in config.4coder the variable virtual_whitespace_regular_indent determines the number of space-widths to use as the regular indentation in a virtual whitespace layout
+ + show whitespace mode implemented in 'default_render_buffer'
+ + `set_face_size` and `set_face_size_this_buffer` commands
+ + `HookID_WholeScreenRenderCaller` hook runs once per frame after all views render
+ + Bindings use exact matches for modifiers, instead of most recent sub-set matches
+ + Extended key codes list
+ + Fix: tabs are measured with the correct amount of width for the user's settings
+ + Fix: virtual whitespace toggling works when the config initially diabled virtual whitespace
+ + Fix: never miss the most recent post to the clipboard on windows
+ + Fix: command `load_theme_current_buffer` gaurds against destroying the active color palette when bad files are loaded
+ + Fix: project deep copy routine copies strings in the whitelist and blacklist pattern arrays
+ + Fix: footer panel manipulation functions check if the view exists
+
+4.1.3
+ + Unkillable buffer setting
+ + UI elements in listers and buttons can have different highlight backgrounds
+ + command 'load_theme_current_buffer' for loading the current file as a theme and setting it as the theme
+ + command 'write_block' for writing a block comment uses mark and cursor range to insert block comment ends
+ + Fix: search and replace never exits early
+ + Fix: optimized builds of the custom layer display the dirty * on the file bar correclty
+ + Fix: can merge "backwards" strings in the history correctly
+ + Fix: the helper user_list_definition_array matches both LF and CRLF line endings
+ + Fix: line number background and text colors in the built in theme files
+ + Fix: a drive letter by itself is recognized as an existing path
+ + Fix: the margin colors for panels are determined by the margins in theme files
+ + Fix: when a file is deleted outside of 4coder, the '!' dirty status is added to the buffer
+ + Fix: on mac file changes outside of 4coder are detected and do not stall the UI
+ + Fix: in virtual whitespace layouts blank lines correctly mark carriage return characters before newline characters
+ + Fix: auto-indentation leaves the carriage return in CRLF line endings in place and does not count them as indentation
+ + Fix: lexer emit pointer advances correctly when the output buffer becomes full
+ + Fix: when include gaurds are inserted into new header files, the generated name isn't killed by numbers or underscores
+ + Fix: base library function string_is_integer returns false on empty string
+ + Fix: preprocessor directives after incomplete statements are aligned to zero by auto-indent
+ + Fix: command 'list_all_functions_current_buffer_lister' and command 'list_all_functions_all_buffers_lister' are marked as UI commands and thus do not infinite loop when they set the buffer
+ + Improvement: optimization in clean_all_lines command, handles CRLF line endings
+
+4.1.2
+ + Cursor color changes when recording macro if the theme provides a second cursor color
+ + Default custom layer now has a feature for supporting fade ranges as used in pasting and undoing
+ + Ability to "partially" paint text with a blend factor to create blends
+ + In file lister, typing a slash with a name for a folder that does not exist asks the user if they would like to create a folder
+ + Fix: parser in code index recognizes functions with more than one parameter
+ + Fix: trying to create a face with a font file that doesn't exist doesn't crash
+ + Fix: escaping command documentation lister doesn't crash
+ + Fix: lexer generator switched to new macro names Max and Min
+ + Fix: implementation for getting previous view iterates from null to the last view in order (instead of the first)
+ + Fix: auto-indent when a file with virtual whitespace is saved
+ + Fix: can create up to sixteen panels, and doesn't crash when trying to create more
+ + Fix: faster text range highlighting
+ + Fix: side by side editing a single buffer doesn't scroll the lower view down when insterting lines in the higher view
+ + Fix: indentation after paren group is correct
+
+4.1.1
+ Changes not documented
+
+4.1.0
+ Initial beta version
+
+**************************************************
+**************************************************
+
+New in alpha 4.0.30:
+-Mouse events (clicking, scroll wheel, mouse move) can now be bound with modifier keys
+-New and changed commands:
+ <ctrl scroll_wheel> change font size
+ <ctrl ;> toggle line comment (C++ type comments)
+ <ctrl I> open a lister for all functions in all buffers (heuristic parse can have false positives)
+-Bug fix: Fixed occasional crash when rendering a new buffer
+-Bug fix: High CPU usage in lister from perpetual animation mode
+-Bug fix: Panel resizing by mouse
+-Bug fix: Crashes from entering incomplete/nonsense file paths in file open/new listers
+-Bug fix: Various bugs in the notepad like mode
+-Bug fix: Crashes in file and buffer listers with a lot of items
+-Bug fix: Lexing scientific notation floats with + signs
+-Bug fix: Really long wrapped line using up entire render scratch buffer
+-Bug fix: Line highlights when scrolled to the right so the beginning of the line is off screen
+-Bug fix: Mismatch between lister state and hot directory leading to confusing file open/new behavior
+
+New in alpha 4.0.29:
+-New UI api supporting customizable UIs
+-Managed memory API
+-Managed variables API
+-Highlighting and marking API, supporting customizable line higlights, range highlights, cursors and marks
+-In config.4coder "use_line_highlight" enables the highlight at the cursor in the active view
+-In config.4coder "use_scope_highlight" enables background highlighting to distinguish scopes in code files
+-In config.4coder "use_paren_helper" enalbes distinct coloring for matching parentheses
+-In config.4coder "use_comment_keyword" enables special coloring for the strings 'TODO' and 'NOTE' anywhere they occur, in code or text
+-In config.4coder "mode" sets the editing mode
+ "4coder" the default 4coder mode
+ "notepad-like" edit with an i-bar, and highlight range, like notepad, notepad++, sublime text, etc.
+-Listers now sort exact matches to the top over partial matches
+-New and changed commands
+ <alt x> opens a lister of all built in 4coder commands
+ <alt X> opens a lister of commands in the currently loaded project
+ <ctrl j> opens a lister of code snippets
+
+New in alpha 4.0.28:
+-In config.4coder "eanble_virtual_whitespace" is now separate from "enable_code_wrapping"
+-In project.4coder .os = "all" now matches for all operating systems
+-In project.4coder .os = "default" matches if no other match is available
+-When doing isearch <ctrl backspace> clears the entire query
+-When doing isearch <ctrl enter> sets the search field to the previous search string
+-Bug fix: Fixed issues with string escape sequences in the parser for *.4coder files
+-Bug fix: On windows network directories can now be browsed and their files can be loaded
+-Bug fix: Linux keyboard handling has been upgraded to allow certain custom layouts to work
+-Bug fix: Fixed replace_all_occurences in 4coder_experiments.cpp
+-Bug fix: "buildsuper" scripts now runs metadata_generator on the result of the preprocessor
+          ensuring it only tries to link to commands that will actually be defined
+
+New in alpha 4.0.27:
+-Project system upgraded to "version(1)"
+ Wildcard patterns for file loading
+ Load all files from multiple paths
+ Maintain a list of common command line commands for the project
+-New commands:
+ <alt x> + 'toggle fullscreen' toggle fullscreen mode
+ <alt x> + 'new bat' create a batch script for building a particular source file
+ <alt x> + 'new sh' create a shell script for building a particular source file
+ <alt x> + 'new scripts' create a batch and shell script for building a particular source file
+-Upgrade to config.4coder:
+ "default_font_size" set a font size to use (overriden by command line)
+ "default_font_hinting" default setting for hinting (overriden by command line)
+ "use_scroll_bars" the default setting for panel scroll bars
+ "use_file_bars" the default setting for panel file bars
+
+New in alpha 4.0.26:
+ Routine bug fixing...
+-Fixed various text input crash bugs
+-Fixed load large file crash bug
+-Fixed crash in 'list_all_locations_of_type_definition_of_identifier'
+-Fixed sticky jump crash
+-Fixed line move/delete bugs on last line of file
+-Fixed <end> to work on indefinitely long lines
+-Fixed jump behavior quirks with parsing and cursor movement
+-Fixed rare bug causing copy from other applications to fail on Windows
+-Fixed auto indent commands to do a better job picking an anchor for parsing
+ Testing system now in place (windows only):
+ Flag -R <file-name> creates an 'input recording' file of the 4coder session
+ Flag -T <file-name> overrides user input and drives input by the input recorded in the specified file
+
+New in alpha 4.0.25:
+-Support for unbounded paste sizes
+-Window title now reflects the open project file
+-Buffer names resolve with more path information instead of just a counter
+-Support for Rust error format and improved autoindenting for Rust
+-Work around for bug in make on Windows
+-New commands:
+ <ctrl 1> show the current buffer in the other panel (side by side)
+ <ctrl 2> show the current buffer in the other panel (swap with other buffer)
+ <alt D> list all type definition locations of a particular string ~ if only one jump to it instead
+ <alt T> list all type definition locations of the token under the cursor ~ if only one jump to it instead
+-The indenter no longer does anything to multi-line strings such as raw strings.
+-The customization API now has the ability to set the window's title.
+-The customization API has a hook for resolving buffer name conflicts.
+
+New in alpha 4.0.24:
+-Fonts can now be loaded from the system API or from the fonts folder
+-Fonts can now be resized at run time, hinting can be toggled at run time
+-Fonts can now be rendered with any combination of the styles: bold, italic, underline
+  (That is provided the font supports the style.)
+-Now font faces can have different sizes simultaneously, or have the different hinting or styling configurations.
+-Lots of new built in commands including:
+ <ctrl D> delete the line under the cursor
+ <ctrl L> duplicate the line under the cursor
+ <alt up> move the line under the cursor up
+ <alt down> move the line under the cursor down
+ <alt [> select surrounding scope in code file
+ <alt ]> select the next scope up in code file
+ <alt '> select the next scope down in code file
+ <alt -> if a scope is selected, delete it's braces
+ <alt j> if a scope is selected, absorb the statement below it into the scope
+ <alt x> + 'delete file' close the current buffer and delete it's physical file
+ <alt x> + 'rename file' rename the current buffer's physical file and reopen the buffer with the new file name
+ <alt x> + 'mkdir' create a new directory
+-The customization API is extended for more explicit font face control.
+-The customization API comes with a parser and generator for generating metadata on built in and custom commands.
+
+New in alpha 4.0.22 and 4.0.23:
+-The rendering layer is cleaned up and faster
+-4coder can now ship with multiple built in command bindings
+  New built in binding "mac-default": For the mac version of 4coder - similar to most Mac applications
+-Fullscreen now works on Windows without the '-S' flag
+-Set up a single 4coder project for Windows/Linux/Mac in one command: <alt x> -> "new project"
+
+New in alpha 4.0.21:
+-Color schemes are now loaded in theme files from the "themes" folder
+-After loading a project <alt h> sets the hot directory to the project directory
+-The flag -L enables a logging system that will collect information in case more information is needed while debugging a problem
+-All command line flags after the special flag --custom are now passed to the custom API start hook
+-The start hook now gets the list of file names that were specified on the command line
+  All of the files specified on the command line are loaded before the start hook runs
+-It is now possible to set the hot directory from the custom API
+-On windows the buildsuper scripts are improved to look for vcvarsall.bat in lots of common locations
+
+New in alpha 4.0.20:
+-Option for LAlt + LCtrl = AltGr on Windows is now in config.4coder
+-The 4cpp lexer now has a customizable keyword table, *experimental* expansion of language support to:
+  Rust, C#, Java
+  Arbitrary keyword customization available in custom code (super users)
+
+New in alpha 4.0.19:
+-Lexer now handles string literal prefixes and is more optimized
+-Fixes for lingering unicode bugs
+-Power users have an experimental new jump to error that keeps correct positions through edits (coming to all tiers soon)
+
+New in alpha 4.0.18:
+-Support for rendering unicode characters
+-<ctrl t> isearch alpha-numeric word under cursor
+-<ctrl Q> query replace alpha-numeric word under cursor
+-<alt b> toggle file bar
+
+New in alpha 4.0.17:\n"
+-New support for extended ascii input.
+-Extended ascii encoded in buffers as utf8.
+-The custom layer now has a 'markers' API for tracking buffer positions across changes.
+
+New in alpha 4.0.16:
+-<alt 2> If the current file is a C++ code file, this opens the matching header.
+  If the current file is a C++ header, this opens the matching code file.
+-Option to automatically save changes on build in the config file.
+  This works for builds triggered by <alt m>.
+-Option in project files to have certain fkey commands save changes.
+
+New in alpha 4.0.15:
+-<ctrl I> find all functions in the current buffer and list them in a jump buffer
+-option to set user name in config.4coder
+  The user name is used in <alt t> and <alt y> comment writing commands
+
+New in alpha 4.0.14:
+-Option to have wrap widths automatically adjust based on average view width
+-The 'config.4coder' file can now be placed with the 4ed executable file
+-New options in 'config.4coder' to specify the font and color theme
+-New built in project configuration system
+-New on-save hooks allows custom behavior in the custom layer whenever a file is saved
+-When using code wrapping, any saved file is automatically indented in the text format, this option can be turned off in config.4coder
+
+New in alpha 4.0.12 and 4.0.13:
+-Text files wrap lines at whitespace when possible
+-New code wrapping feature is on by default
+-Introduced a 'config.4coder' for setting several wrapping options:
+  enable_code_wrapping: set to false if you want the text like behavior
+  default_wrap_width: the wrap width to set in new files
+-<ctrl 2> decrease the current buffer's wrap width
+-<ctrl 3> increase the current buffer's wrap width
+-In the customization layer new settings for the buffer are exposed dealing with wrapping
+-In the customization layer there is a call for setting what keys the GUI should use
+
+New in alpha 4.0.11:
+-The commands for going to next error, previous error, etc now work
+  on any buffer with jump locations including *search*
+-4coder now supports proper, borderless, fullscreen with the flag -F
+  and fullscreen can be toggled with <control pageup>.
+  (This sometimes causes artifacts on the Windows task bar)
+-<alt E> to exit
+-hook on exit for the customization system
+-tokens now exposed in customization system
+-mouse release events in customization system
+
+New in alpha 4.0.10:
+-<ctrl F> list all locations of a string across all open buffers
+-Build now finds build.sh and Makefile on Linux
+-<alt n> goes to the next error if the *compilation* buffer is open
+-<alt N> goes to the previous error
+-<alt M> goes to the first error
+-<alt .> switch to the compilation buffer
+-<alt ,> close the panel viewing the compilation buffer
+-New documentation for the 4coder string library included in 4coder_API.html
+-Low level allocation calls available in custom API
+-Each panel can change font independently.
+  Per-buffer fonts are exposed in the custom API.
+
+New in alpha 4.0.9:
+-A scratch buffer is now opened with 4coder automatically
+-A new mouse suppression mode toggled by <F2>
+-Hinting is disabled by default, a -h flag on the command line enables it
+-New 4coder_API.html documentation file provided for the custom layer API
+-Experimental new work-flow for building and jumping to errors
+  This system is only for MSVC in the 'power' version as of 4.0.9
+
+New in alpha 4.0.8:
+-Eliminated the parameter stack
+
+New in alpha 4.0.7:
+-Right click sets the mark
+-Clicks now have key codes so they can have events bound in customizations
+-<alt d> opens a debug view, see more in README.txt
+
+New in alpha 4.0.6:
+-Tied the view scrolling and the list arrow navigation together
+-Scroll bars are now toggleable with <alt s> for show and <alt w> for hide
+
+New in alpha 4.0.5:
+-New indent rule
+-app->buffer_compute_cursor in the customization API
+-f keys are available in the customization system now
+
+New in alpha 4.0.3 and 4.0.4:
+-Scroll bar on files and file lists
+-Arrow navigation in lists
+-A new minimal theme editor
+
+New in alpha 4.0.2:
+-The file count limit is over 8 million now
+-File equality is handled better so renamings (such as 'subst') are safe now
+-This buffer will report events including errors that happen in 4coder
+-Super users can post their own messages here with app->print_message
+-<ctrl e> centers view on cursor; cmdid_center_view in customization API
+-Set font size on command line with -f N, N = 16 by default
+

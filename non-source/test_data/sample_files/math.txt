@@ -1,0 +1,54 @@
+Defining a "real number"
+
+------------------------
+Natural Numbers (granted)
+1 2 3 4 5 ...
+
+Integers?
+"I want to close my number set under the operation of subtraction."
+
+(a1, a2) - (b1, b2) = (a1 + b2, a2 + b1)
+
+a = (3, 4); b = (5, 6);
+
+(a1, a2) equals (b1, b2) if a1 + b2 = a2 + b1
+
+Rationals?
+"I want to close my number set under the operation of division."
+
+(a1, a2) / (b1, b2) = (a1*b2, a2*b1)
+
+(a1, a2) equals (b1, b2) if a1*b2 = a2*b1
+
+Reals?
+My examples of definitions that aren't solid:
+~ Anything/any point you can plot on the number line
+~ Dedekind (spelling?) cut
+
+"I want to close my number set under limits."
+By limit I mean the n-ε-definition
+
+(a1, a2, a3, a4, ...)
+
+( 1,  0,  1,  0, ...)
+(1/2, 1/2, 1/2, 1/2, ...)
+(1/2, 3/4, 7/8, 15/16, ...)
+
+Start with the range (1,2)
+Bisect the range - x - this is the next element of the series
+Square x
+if (x > 2) update the range to (lower,x)
+else update the range to (x,upper)
+limit (3/2, 5/4, 11/8, 21/16, ...) = y
+
+Cauchy sequence - a sequence given any ε there is an n
+such that for any m,r >= n |am - ar| < ε
+
+"Close under limits." means
+"We want a set of numbers where every Cauchy sequence converges
+to a number in the set."
+
+(a1, a2, a3, a4, ...)
+
+a + b = (a1, a2, a3, a4, ...) + (b1, b2, b3, b4, ...)
+      = (a1 + b1, a2 + b2, a3 + b3, ...)

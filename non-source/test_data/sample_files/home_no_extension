@@ -1,0 +1,34 @@
+<html lang="en-US">
+<head>
+<link rel='shortcut icon' type='image/x-icon' href='4coder_icon.ico' />
+<title>4coder Home</title>
+<style>
+body { background: #FAFAFA; color: #0D0D0D; }
+h1,h2,h3,h4 { color: #309030; margin: 0; }
+h2 { margin-top: 6mm; }
+h3 { margin-top: 5mm; margin-bottom: 5mm; }
+h4 { font-size: 1.1em; }
+a { color: #309030; text-decoration: none; }
+a:visited { color: #A0C050; }
+a:hover { background: #E0FFD0; }
+ul { list-style: none; padding: 0; margin: 0; }
+</style>
+</head>
+<body>
+<div style='font-family:Arial; margin: 0 auto; width: 800px; text-align: justify; line-height: 1.25;'>
+<p><a href='home.html'>
+<img src='4coder_logo_200_105.png' style='width: 200px; height: 105px;'>
+</a></p>
+<p>4coder is a code editor that first and foremost targets the needs of C/C++ developers so they can be as efficient as possible. Here you can learn about the features of 4coder, how to get started with 4coder, and how to get the absolute most out of 4coder.</p>
+<p>If you cannot find what you are looking for please contact <span style='font-family: "Courier New", Courier, monospace; text-align: left;'> editor@4coder.net </span> with questions.</p>
+<p><a target='_blank' href='http://patreon.com/mr4thdimention'> Get an alpha build by supporting development </a></p>
+<p><a href='features.html'> The official 4coder feature list </a></p>
+<p><a href='roadmap.html'> The official 4coder road map </a></p>
+<p><a href='custom_docs.html'> The official documentation for the 4coder customization system </a></p>
+<p><a href='tutorials.html'> Using 4coder tutorials </a></p>
+<p><img src='screen_1_800_450.png' style='width: 800px; height: 450px;'></p>
+<p><img src='screen_2_800_451.png' style='width: 800px; height: 451px;'></p>
+<p><img src='screen_3_800_451.png' style='width: 800px; height: 451px;'></p>
+</div>
+</body>
+</html>

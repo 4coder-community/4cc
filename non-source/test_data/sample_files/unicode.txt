@@ -1,0 +1,11 @@
+"������"
+ññññññññññ‽‽‽‽!?
+ññññññññññ‽‽‽‽!?
+
+€£¥¢₹₨₱₩₫₪‽‽‽‽!?
+€£¥¢₹₨₱₩₫₪‽‽‽‽!?
+
+The limit of ƒ as x approaches α is L if,
+for any ε > 0 there exists a δ > 0 such that
+|ƒ(x) - L| < δ implies 0 < |x - α| < ε
+

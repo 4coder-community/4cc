@@ -1,0 +1,13 @@
+#define GlobalConstants_Renderer_ShowLightingSamples 0
+#define GlobalConstants_Renderer_Camera_UseDebug 0
+#define GlobalConstants_Renderer_Camera_DebugDistance 25.0f
+#define GlobalConstants_Renderer_Camera_RoomBased 0
+#define GlobalConstants_GroundChunks_Checkerboards 0
+#define GlobalConstants_GroundChunks_RecomputeOnEXEChange 1
+#define GlobalConstants_Renderer_TestWeirdDrawBufferSize 0
+#define GlobalConstants_GroundChunks_Outlines 0
+#define GlobalConstants_AI_Familiar_FollowsHero 0
+#define GlobalConstants_Particles_Test 0
+#define GlobalConstants_Particles_ShowGrid 0
+#define GlobalConstants_Simulation_UseSpaceOutlines 0
+

@@ -1,0 +1,219 @@
+
+keys_global =
+{
+    // NOTE(rjf): Meta
+    { "exit_4coder" ,                             "F4",      "Alt"                     },
+    { "keyboard_macro_start_recording" ,          "U",      "Control"                  },
+    { "keyboard_macro_finish_recording",          "U",      "Control", "Shift"         },
+    { "keyboard_macro_replay",                    "U",      "Alt"                      },
+    { "change_active_panel",                      "Comma",  "Control"                  },
+    { "change_active_panel_backwards",            "Comma",  "Control", "Shift"         },
+    { "project_go_to_root_directory",             "H",      "Control"                  },
+    { "f4_toggle_compilation_expand",         "Insert"                             },
+    { "change_to_build_panel",                    "Period", "Alt"                      },
+    { "close_build_panel",                        "Comma",  "Alt"                      },
+    { "f4_switch_syntax_option",                  "Tick",   "Control"                  },
+    
+    // NOTE(rjf): Files
+    { "interactive_new",                          "N",      "Control"                  },
+    { "f4_setup_new_project",                     "N",      "Control", "Shift"         },
+    { "interactive_open_or_new",                  "O",      "Control"                  },
+    { "f4_interactive_open_or_new_in_project",    "O",      "Alt"                      },
+    { "f4_open_project",                          "O",      "Control", "Shift"         },
+    { "interactive_kill_buffer",                  "K",      "Control"                  },
+    { "interactive_switch_buffer",                "I",      "Control"                  },
+    { "save_all_dirty_buffers",                   "S",      "Control", "Shift"         },
+    { "f4_recent_files_menu",                     "V",      "Alt"                      },
+    
+    // NOTE(rjf): Jump Lists
+    { "goto_next_jump",                           "N",      "Alt"                      },
+    { "goto_prev_jump",                           "N",      "Alt",     "Shift"         },
+    { "goto_first_jump",                          "M",      "Alt",     "Shift"         },
+    
+    // NOTE(rjf): Commands
+    { "execute_any_cli",                          "Z",      "Alt"                      },
+    { "execute_previous_cli",                     "Z",      "Alt",     "Shift"         },
+    { "command_lister",                           "X",      "Alt"                      },
+    
+    // NOTE(rjf): Project
+    { "build_in_build_panel",                     "M",      "Alt"                      },
+    { "project_command_lister",                   "X",      "Alt",     "Shift"         },
+    { "project_fkey_command",                     "F1", "Control"                      },
+    { "project_fkey_command",                     "F2", "Control"                      },
+    { "project_fkey_command",                     "F3", "Control"                      },
+    { "project_fkey_command",                     "F4", "Control"                      },
+    { "project_fkey_command",                     "F5", "Control"                      },
+    { "project_fkey_command",                     "F6", "Control"                      },
+    { "project_fkey_command",                     "F7", "Control"                      },
+    { "project_fkey_command",                     "F8", "Control"                      },
+    { "project_fkey_command",                     "F9", "Control"                      },
+    { "project_fkey_command",                     "F10", "Control"                     },
+    { "project_fkey_command",                     "F11", "Control"                     },
+    { "project_fkey_command",                     "F12", "Control"                     },
+    { "project_fkey_command",                     "F13", "Control"                     },
+    { "project_fkey_command",                     "F14", "Control"                     },
+    { "project_fkey_command",                     "F15", "Control"                     },
+    { "project_fkey_command",                     "F16", "Control"                     },
+    
+    // NOTE(rjf): Panels
+    { "open_panel_vsplit", "P", "Control" },
+    { "open_panel_hsplit", "Minus", "Control" },
+    { "close_panel", "P", "Control", "Shift" },
+    { "f4_search_for_definition__project_wide", "J", "Control" },
+    { "f4_search_for_definition__current_file", "J", "Control", "Shift" },
+    { "jump_to_last_point", "J", "Alt" },
+    
+};
+
+keys_file =
+{
+    // NOTE(rjf): None => Characters
+    //            Ctrl => Tokens
+    //            Alt  => Alphanumeric/Camel
+    
+    // NOTE(rjf): Backspace/Delete
+    { "delete_char",                                  "Delete"               },
+    { "f4_delete_token_boundary",                     "Delete",    "Control" },
+    { "f4_delete_alpha_numeric_or_camel_boundary",    "Delete",    "Alt"     },
+    { "backspace_char",                               "Backspace"            },
+    { "f4_backspace_token_boundary",                  "Backspace", "Control" },
+    { "f4_backspace_alpha_numeric_or_camel_boundary", "Backspace", "Alt"     },
+    
+    // NOTE(rjf): Left/Right Arrow Keys
+    { "f4_move_left",                               "Left"              },
+    { "f4_move_left_token_boundary",                "Left", "Control"   },
+    { "move_left_alpha_numeric_or_camel_boundary",  "Left", "Alt"       },
+    { "f4_move_right",                              "Right"             },
+    { "f4_move_right_token_boundary",               "Right", "Control"  },
+    { "move_right_alpha_numeric_or_camel_boundary", "Right", "Alt"      },
+    
+    // NOTE(rjf): Up/Down Arrow Keys
+    { "move_up",                "Up" },
+    { "move_down",              "Down" },
+    { "move_up_to_blank_line_end",        "Up", "Control" },
+    { "move_down_to_blank_line_end",      "Down", "Control" },
+    { "move_line_up",                     "Up", "Alt" },
+    { "move_line_down",                   "Down", "Alt" },
+    { "f4_move_to_prev_divider_comment",  "Up", "Control", "Shift" },
+    { "f4_move_to_next_divider_comment",  "Down", "Control", "Shift" },
+    { "f4_move_up_token_occurrence",      "Up", "Control", "Alt" },
+    { "f4_move_down_token_occurrence",    "Down", "Control", "Alt" },
+    
+    // NOTE(rjf): Alternative Movement Keys
+    { "seek_end_of_line",             "End" },
+    { "f4_home_first_non_whitespace", "Home" },
+    { "page_up",                "PageUp" },
+    { "page_down",              "PageDown" },
+    { "goto_beginning_of_file", "PageUp", "Control" },
+    { "goto_end_of_file",       "PageDown", "Control" },
+    
+    // NOTE(rjf): Mark
+    { "set_mark",                    "Space", "Control" },
+    { "cursor_mark_swap",            "M", "Control" },
+    
+    // NOTE(rjf): Search
+    { "f4_search",                   "F", "Control" },
+    { "f4_reverse_search",           "R", "Control" },
+    { "list_all_locations",          "F", "Control", "Shift" },
+    { "list_all_substring_locations_case_insensitive", "F", "Alt" },
+    { "goto_line",                   "G", "Control" },
+    { "list_all_locations_of_selection",  "G", "Control", "Shift" },
+    { "search_identifier",           "T", "Control" },
+    { "list_all_locations_of_identifier", "T", "Control", "Shift" },
+    
+    // NOTE(rjf): Replace
+    { "replace_in_range",            "A", "Control" },
+    { "query_replace",               "Q", "Control" },
+    { "query_replace_identifier",    "Q", "Control", "Shift" },
+    { "query_replace_selection",     "Q", "Alt" },
+    
+    // NOTE(rjf): Clipboard
+    { "copy",                        "C", "Control" },
+    { "paste_and_indent",            "V", "Control" },
+    { "paste_next_and_indent",       "V", "Control", "Shift" },
+    { "cut",                         "X", "Control" },
+    
+    // NOTE(rjf): Lego
+    { "f4_lego_buffer_place",        "F1", },
+    { "f4_lego_buffer_place",        "F2", },
+    { "f4_lego_buffer_place",        "F3", },
+    { "f4_lego_buffer_place",        "F4", },
+    
+    // NOTE(rjf): Deletion
+    { "delete_range",                "D", "Control" },
+    { "delete_line",                 "D", "Control", "Shift" },
+    
+    // NOTE(rjf): Insertion
+    { "duplicate_line",              "L", "Control" },
+    
+    // NOTE(rjf): View
+    { "center_view",                 "E", "Control" },
+    { "left_adjust_view",            "E", "Control", "Shift" },
+    
+    // NOTE(rjf): File
+    { "kill_buffer",                 "K", "Control", "Shift" },
+    { "reopen",                      "O", "Alt", "Shift" },
+    { "save",                        "S", "Control" },
+    { "save_all_dirty_buffers",      "S", "Control", "Shift" },
+    { "redo",                        "Y", "Control" },
+    { "undo",                        "Z", "Control" },
+    { "view_buffer_other_panel",     "1", "Control" },
+    
+    // NOTE(rjf): Meta
+    { "swap_panels",                 "2", "Control" },
+    { "if_read_only_goto_position",  "Return" },
+    { "if_read_only_goto_position_same_panel", "Return", "Shift" },
+    { "view_jump_list_with_lister",  "Period", "Control", "Shift" },
+    
+    // NOTE(rjf): Code Peek
+    { "f4_code_peek",          "Tick",  "Alt" },
+    { "f4_code_peek_yank",     "Tab", "Control" },
+    { "f4_code_peek_clear",    "Shift", "Alt" },
+    
+    // NOTE(rjf): Go To Def
+    { "f4_go_to_definition",   "Return", "Control" },
+    { "f4_go_to_definition_same_panel", "Return", "Control", "Shift" },
+    
+    // NOTE(rjf): Helpers
+    { "f4_write_zero_struct",  "0", "Control" },
+    { "f4_toggle_enclosure_side",  "Semicolon", "Alt" },
+};
+
+keys_code =
+{
+    { "f4_comment_selection",       "Semicolon", "Control" },
+    { "f4_uncomment_selection",     "Semicolon", "Control", "Shift", },
+    { "f4_autocomplete_or_indent",  "Tab" },
+    { "f4_unindent",                "Tab", "Shift" },
+    { "word_complete_drop_down",    "Tab", "Shift", "Control" },
+    { "write_block",                "R", "Alt" },
+    { "write_todo",                 "T", "Alt" },
+    { "write_note",                 "Y", "Alt" },
+    { "list_all_locations_of_type_definition",               "D", "Alt" },
+    { "list_all_locations_of_type_definition_of_identifier", "T", "Alt", "Shift" },
+    { "open_long_braces",           "LeftBracket", "Control" },
+    { "open_long_braces_semicolon", "LeftBracket", "Control", "Shift" },
+    { "open_long_braces_break",     "RightBracket", "Control", "Shift" },
+    { "select_surrounding_scope",   "LeftBracket", "Alt" },
+    { "select_surrounding_scope_maximal", "LeftBracket", "Alt", "Shift" },
+    { "select_prev_scope_absolute", "RightBracket", "Alt" },
+    { "select_prev_top_most_scope", "RightBracket", "Alt", "Shift" },
+    { "select_next_scope_absolute", "Quote", "Alt" },
+    { "select_next_scope_after_current", "Quote", "Alt", "Shift" },
+    { "place_in_scope",             "ForwardSlash", "Alt" },
+    { "delete_current_scope",       "Minus", "Alt" },
+    { "if0_off",                    "I", "Alt" },
+    { "open_file_in_quotes",        "1", "Alt" },
+    { "open_matching_file_cpp",     "2", "Alt" },
+    
+    { "f4_lego_store_range",        "F5", "Alt" },
+    { "f4_lego_store_range",        "F6", "Alt" },
+    { "f4_lego_store_range",        "F7", "Alt" },
+    { "f4_lego_store_range",        "F8", "Alt" },
+    
+    { "f4_lego_store_token",        "F5" },
+    { "f4_lego_store_token",        "F6" },
+    { "f4_lego_store_token",        "F7" },
+    { "f4_lego_store_token",        "F8" },
+    
+};

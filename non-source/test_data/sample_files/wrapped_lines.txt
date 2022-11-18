@@ -1,0 +1,30 @@
+
+Explenation for document:
+
+I am having an issue with wrapped lines... or so I am told.  I have a few ideas on what might cause it, some being fairly difficult to fix others being quite straightforward.  Either way I first need a test case to expose the problem, so I shall write a piece of fictional literature that has been on my mind in the recent past.
+
+
+The story:
+
+It was my first time compiling a piece of software with an ancient C++ compiler.  The complex rules of the compiler were hard to fully grasp, not to mention the emulated x64 chip.  Still, I believed my program would read the smallest one thousand  prime natural numbers, perhaps after a lot of trouble shooting.  There was something thrilling about the way people use to construct software way back then.
+
+After that little experiment I thought I had a good grasp of the era.  I thought certainly with these computational tools the ancient programmers could not have built any of the monuments we normally attribute to them.
+
+"There is clearly something about the historical record that does not add up", I thought to myself.  "Perhaps in the early 21st century they had better tools than we thought... but how could that be?  All the documents from the engineers responsible for creating tools like C++ are clearly dated for that time period.  Is it possible that the documents we have now were altered accidentally or maliciously?"
+
+I tried not to spend time on hypothesise that would be untestable.  So I turned my thoughts again to how to the basic facts of the era.  I began thinking "It took me just ten days to create a C++ program to generate one thousand primes.  Perhaps if I just run the numbers I will see that it actually makes sense... " but I ran the numbers, even taking the figure of one hundred and twenty million programmers at any given time, which is believed to be an accurate figure for that era, and quadrupling it, the amount of 'code' produced just did not add up.  That calculation does not even take into account the intercomplexification that the software would have as it grew larger and how that would further slow the process."
+
+"Given the amount of software production we attribute to that time period, they must have had some better tool that slipped out of the historical record, that created the C++ programs for them."  I had started suspecting this very early on. Actually, I almost resorted to this method myself for my prime program.  "Still it does not really make sense.  If they had a better tool for making the C++ programs, why could they not have just cut C++ out of their systems?  Why did they spend so much time documenting and expanding it?  And, ultimately, how could such a tool have been lost in the historical record?"
+
+Again it seemed like an unpromising path of speculation.  There was no reason to believe such a tool existed.  It seemed, to me, more likely that the dates in the documents were wrong, but that was not particularly satisfying either.
+
+There was plenty of record of the population interacting with all this inexplicable software too.  There was no way this was some sort of propaganda piece.  I looked through all sorts of commentaries from ancient 'databases'; accessing those was, by the way, another great ordeal of work.  It was clear that the monumental software of the time, while inexplicably huge, had a number of problems.  It was certainly not the smooth, beautiful, reliable, computation we enjoy today.  The commentaries I looked at were full of methods to make better use of poorly functioning systems, and complaints about systems that ran too slowly for apparently undiagnosable reasons.
+
+I eventually found some samples of a C++ program code and I was totally baffled at what I discovered.  Not that it revealed any new information, but what it suggested very perfectly fit with the belief that they really did hand write their C++ software and the dates in the source checked out with the dates in the standards.  The source texts were often erradic having no particular rule about how things should be ordered.  There were blank lines scattered all over the place, contributing nothing to the meaning of the software.  There were even notes in natural language describing how code worked, sometimes leaving reminders about sensitive portions, and very often the notes served simply as a request that some of the source text be reexamined or deleted.
+
+There were plenty of other tools similar to C++, and I took a brief look into those tools too.  All of them were basically the same concept as C++, requiring engineers to undergo the tedious task of spelling out all sorts of arcane details about what the software should do to achieve the desired effect.  Among the commentaries there are thoughts from people who appear to be engineers about which tool is better for particular purposes or which tool is better over all, but I can see no reason to beleive that any of these tools were different in any way that would be important, they were all too primitive to account for the massive undertakings of the era.
+
+After studying this mystery for a while, I slowly started to realize that the ancient programmers really just wrote programs with their tools way more quickly than we could imagine.  We assume that we are smarter than our ancestors because we are reaping the benefits of progress they did not have, but perhaps the convenience that surrounds us dulls our minds.  Perhaps the ancient programmers worked hard and were a lot more clever than we realized...
+
+But if they were so clever and so capable to build these monuments by hand, why did humanity not arrive at modern style software sooner?
+

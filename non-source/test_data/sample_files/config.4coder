@@ -1,0 +1,46 @@
+// Command Mapping
+// ""                - Leave the bindings unaltered from their startup value.
+// "choose"          - Ask 4coder to choose based on platform.
+// "default"         - Use the default keybindings 4coder has always had.
+// "mac-4coder-like" - Use keybindings for Mac similar to 4coder's bindings on other platforms.
+// "mac-default"     - Use keybindings similar to those found in other Mac applications.
+// <my-own-string>   - If you use the custom layer to make a named mapping you can use that here too.
+mapping = "";
+
+// Code Wrapping
+enable_code_wrapping = true;
+automatically_adjust_wrapping = true;
+default_wrap_width = 672;
+default_min_base_width = 550;
+
+// This only applies to code files in code-wrapping mode.
+// Plain text and code files without virtual-whitespace will not be effected.
+automatically_indent_text_on_save = true;
+
+// When set to true, all unsaved changes will be saved on a build.
+automatically_save_changes_on_build = true;
+
+// Theme
+default_theme_name = "4coder";
+default_font_name = "Liberation Mono";
+
+// User
+user_name = "NAME";
+
+// Extensions
+treat_as_code = ".cpp.c.hpp.h.cc.cs.java.rs.glsl.m";
+
+// Load project on startup
+automatically_load_project = false;
+
+// Keyboard AltGr setting
+lalt_lctrl_is_altgr = false;
+
+// Project setup configuration
+default_compiler_bat = "cl";
+default_flags_bat = "-GR- -EHa- -nologo -FC -Zi";
+default_compiler_sh = "g++";
+default_flags_sh  = "-g";
+
+// Error test
+user_name = "NAME"

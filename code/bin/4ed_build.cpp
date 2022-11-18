@@ -112,8 +112,8 @@ char *arch_names[] = {
 #define PACK_DIR "../distributions"
 #define SITE_DIR "../site"
 
-#define FOREIGN "../4coder-non-source/foreign"
-#define FOREIGN_WIN "..\\4coder-non-source\\foreign"
+#define FOREIGN "../non-source/foreign"
+#define FOREIGN_WIN "..\\non-source\\foreign"
 
 char *includes[] = { "custom", FOREIGN "/freetype2", 0, };
 
@@ -189,7 +189,7 @@ get_defines_from_flags(Arena *arena, u32 flags){
 #define CL_LIBS_X64 CL_LIBS_COMMON FOREIGN_WIN "\\x64\\freetype.lib"
 #define CL_LIBS_X86 CL_LIBS_COMMON FOREIGN_WIN "\\x86\\freetype.lib"
 
-#define CL_ICON "..\\4coder-non-source\\res\\icon.res"
+#define CL_ICON "..\\non-source\\res\\icon.res"
 
 internal void
 build(Arena *arena, u32 flags, u32 arch, char *code_path, char **code_files, char *out_path, char *out_file, char **defines, char **exports, char **inc_folders){
@@ -654,14 +654,13 @@ package(Arena *arena, char *cdir, Tier_Code tier, Arch_Code arch){
     // NOTE(allen): meta
     char *build_dir = fm_str(arena, BUILD_DIR);
     char *pack_dir = fm_str(arena, PACK_DIR);
-    char *dist_files[3];
-    dist_files[0] = fm_str(arena, "../4coder-non-source/dist_files");
+    char *dist_files[2];
+    dist_files[0] = fm_str(arena, "../non-source/dist_files");
     dist_files[1] = fm_str(arena, "ship_files");
-    dist_files[2] = fm_str(arena, "ship_files_super");
     
     printf("build dir: %s\n", build_dir);
     printf("pack dir: %s\n", pack_dir);
-    printf("dist files: %s, %s, %s\n", dist_files[0], dist_files[1], dist_files[2]);
+    printf("dist files: %s, %s\n", dist_files[0], dist_files[1]);
     fflush(stdout);
     
     u32 base_flags = SHIP | DEBUG_INFO | OPTIMIZATION;

@@ -2,14 +2,19 @@
 
 set location=%cd%
 set me="%~dp0"
+
+REM 4cc\code\bin
 cd %me%
-cd ..
-set src_root=%cd%
-cd ..\build
-set build_root=%cd%
-set bin_root=%src_root%\bin
-set custom_root=%src_root%\custom
+
+REM 4cc
+cd ..\..
+set repo_root=%cd%
+set src_root=%repo_root%\code
+set build_root=%repo_root%\build
+set bin_root=%repo_root%\code\bin
+set custom_root=%repo_root%\code\custom
 set custom_bin=%custom_root\bin
+
 cd %location%
 
 set mode=%1
@@ -21,6 +26,8 @@ set opts=%opts% /I%src_root% /I%custom_root%
 set opts=%opts% %mode%
 
 set FirstError=0
+
+if not exist "%build_root%" mkdir %build_root%
 pushd %build_root%
 call cl %opts% kernel32.lib %bin_root%\4ed_build.cpp /Febuild
 if %ERRORLEVEL% neq 0 (set FirstError=1)

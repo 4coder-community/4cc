@@ -158,6 +158,8 @@ struct Win32_Vars{
     HKL kl_universal;
     
     b8 full_screen;
+    b8 maximized;
+    b8 do_toggle_maximize;
     b8 do_toggle;
     WINDOWPLACEMENT bordered_win_pos;
     b32 send_exit_signal;
@@ -379,6 +381,40 @@ system_is_fullscreen_sig(){
     b32 result = (win32vars.full_screen != win32vars.do_toggle);
     return(result);
 }
+
+
+////////////////////////////////
+// NOTE(lake): Simple Window Maximization so the user still has full window header controls (minimize, maximize/restore down, close)
+
+internal void
+win32_toggle_maximized() {
+    HWND win = win32vars.window_handle;
+    DWORD style = GetWindowLongW(win, GWL_STYLE);
+    
+    if (!win32vars.maximized) {
+	ShowWindow(win, SW_MAXIMIZE);
+	win32vars.maximized = true;
+    } else {
+	ShowWindow(win, SW_RESTORE);
+	win32vars.maximized = false;
+    }
+}
+
+internal
+system_set_maximized_sig() {
+    win32vars.do_toggle_maximize = (win32vars.maximized != maximized);
+    b32 success = true;
+    return(success);
+}
+
+internal
+system_is_maximized_sig() {
+    b32 result = (win32vars.maximized != win32vars.do_toggle_maximize);
+    return(result);
+}
+
+/////////////////////////////////
+// NOTE(lake): Some keyboard modifier stuff by allen im pretty sure
 
 internal
 system_get_keyboard_modifiers_sig(){
@@ -2245,6 +2281,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
             win32_toggle_fullscreen();
             win32vars.do_toggle = false;
         }
+
+	// Note(lake): toggle maximize
+	if (win32vars.do_toggle_maximize) {
+	    win32_toggle_maximized();
+	    win32vars.do_toggle_maximize = false;
+	}
         
         // NOTE(allen): schedule another step if needed
         if (result.animating){

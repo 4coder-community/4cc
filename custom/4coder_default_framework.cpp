@@ -532,6 +532,12 @@ CUSTOM_DOC("Toggle fullscreen mode on or off.  The change(s) do not take effect 
     system_set_fullscreen(!system_is_fullscreen());
 }
 
+CUSTOM_COMMAND_SIG(toggle_maximize)
+CUSTOM_DOC("Toggle maximized mode on or off. The change(s) do not take effect until the next frame.")
+{
+    system_set_maximized(!system_is_maximized());
+}
+
 CUSTOM_COMMAND_SIG(load_themes_default_folder)
 CUSTOM_DOC("Loads all the theme files in the default theme folder.")
 {

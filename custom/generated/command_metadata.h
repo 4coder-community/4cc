@@ -2,7 +2,7 @@
 #define command_id(c) (fcoder_metacmd_ID_##c)
 #define command_metadata(c) (&fcoder_metacmd_table[command_id(c)])
 #define command_metadata_by_id(id) (&fcoder_metacmd_table[id])
-#define command_one_past_last_id 268
+#define command_one_past_last_id 269
 #if defined(CUSTOM_COMMAND_SIG)
 #define PROC_LINKS(x,y) x
 #else
@@ -255,6 +255,7 @@ CUSTOM_COMMAND_SIG(toggle_highlight_enclosing_scopes);
 CUSTOM_COMMAND_SIG(toggle_highlight_line_at_cursor);
 CUSTOM_COMMAND_SIG(toggle_line_numbers);
 CUSTOM_COMMAND_SIG(toggle_line_wrap);
+CUSTOM_COMMAND_SIG(toggle_maximize);
 CUSTOM_COMMAND_SIG(toggle_mouse);
 CUSTOM_COMMAND_SIG(toggle_paren_matching_helper);
 CUSTOM_COMMAND_SIG(toggle_show_whitespace);
@@ -805,26 +806,27 @@ static i32 fcoder_metacmd_ID_toggle_highlight_enclosing_scopes = 242;
 static i32 fcoder_metacmd_ID_toggle_highlight_line_at_cursor = 243;
 static i32 fcoder_metacmd_ID_toggle_line_numbers = 244;
 static i32 fcoder_metacmd_ID_toggle_line_wrap = 245;
-static i32 fcoder_metacmd_ID_toggle_mouse = 246;
-static i32 fcoder_metacmd_ID_toggle_paren_matching_helper = 247;
-static i32 fcoder_metacmd_ID_toggle_show_whitespace = 248;
-static i32 fcoder_metacmd_ID_toggle_virtual_whitespace = 249;
-static i32 fcoder_metacmd_ID_tutorial_maximize = 250;
-static i32 fcoder_metacmd_ID_tutorial_minimize = 251;
-static i32 fcoder_metacmd_ID_uncomment_line = 252;
-static i32 fcoder_metacmd_ID_undo = 253;
-static i32 fcoder_metacmd_ID_undo_all_buffers = 254;
-static i32 fcoder_metacmd_ID_view_buffer_other_panel = 255;
-static i32 fcoder_metacmd_ID_view_jump_list_with_lister = 256;
-static i32 fcoder_metacmd_ID_word_complete = 257;
-static i32 fcoder_metacmd_ID_word_complete_drop_down = 258;
-static i32 fcoder_metacmd_ID_write_block = 259;
-static i32 fcoder_metacmd_ID_write_hack = 260;
-static i32 fcoder_metacmd_ID_write_note = 261;
-static i32 fcoder_metacmd_ID_write_space = 262;
-static i32 fcoder_metacmd_ID_write_text_and_auto_indent = 263;
-static i32 fcoder_metacmd_ID_write_text_input = 264;
-static i32 fcoder_metacmd_ID_write_todo = 265;
-static i32 fcoder_metacmd_ID_write_underscore = 266;
-static i32 fcoder_metacmd_ID_write_zero_struct = 267;
+static i32 fcoder_metacmd_ID_toggle_maximize = 246;
+static i32 fcoder_metacmd_ID_toggle_mouse = 247;
+static i32 fcoder_metacmd_ID_toggle_paren_matching_helper = 248;
+static i32 fcoder_metacmd_ID_toggle_show_whitespace = 249;
+static i32 fcoder_metacmd_ID_toggle_virtual_whitespace = 250;
+static i32 fcoder_metacmd_ID_tutorial_maximize = 251;
+static i32 fcoder_metacmd_ID_tutorial_minimize = 252;
+static i32 fcoder_metacmd_ID_uncomment_line = 253;
+static i32 fcoder_metacmd_ID_undo = 254;
+static i32 fcoder_metacmd_ID_undo_all_buffers = 255;
+static i32 fcoder_metacmd_ID_view_buffer_other_panel = 256;
+static i32 fcoder_metacmd_ID_view_jump_list_with_lister = 257;
+static i32 fcoder_metacmd_ID_word_complete = 258;
+static i32 fcoder_metacmd_ID_word_complete_drop_down = 259;
+static i32 fcoder_metacmd_ID_write_block = 260;
+static i32 fcoder_metacmd_ID_write_hack = 261;
+static i32 fcoder_metacmd_ID_write_note = 262;
+static i32 fcoder_metacmd_ID_write_space = 263;
+static i32 fcoder_metacmd_ID_write_text_and_auto_indent = 264;
+static i32 fcoder_metacmd_ID_write_text_input = 265;
+static i32 fcoder_metacmd_ID_write_todo = 266;
+static i32 fcoder_metacmd_ID_write_underscore = 267;
+static i32 fcoder_metacmd_ID_write_zero_struct = 268;
 #endif

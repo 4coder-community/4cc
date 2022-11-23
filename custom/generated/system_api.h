@@ -51,6 +51,8 @@
 #define system_show_mouse_cursor_sig() void system_show_mouse_cursor(i32 show)
 #define system_set_fullscreen_sig() b32 system_set_fullscreen(b32 full_screen)
 #define system_is_fullscreen_sig() b32 system_is_fullscreen(void)
+#define system_set_maximized_sig() b32 system_set_maximized(b32 maximized)
+#define system_is_maximized_sig() b32 system_is_maximized(void)
 #define system_get_keyboard_modifiers_sig() Input_Modifier_Set system_get_keyboard_modifiers(Arena* arena)
 #define system_set_key_mode_sig() void system_set_key_mode(Key_Mode mode)
 #define system_set_source_mixer_sig() void system_set_source_mixer(void* ctx, Audio_Mix_Sources_Function* mix_func)
@@ -108,6 +110,8 @@ typedef Memory_Annotation system_memory_annotation_type(Arena* arena);
 typedef void system_show_mouse_cursor_type(i32 show);
 typedef b32 system_set_fullscreen_type(b32 full_screen);
 typedef b32 system_is_fullscreen_type(void);
+typedef b32 system_set_maximized_type(b32 maximized);
+typedef b32 system_is_maximized_type(void);
 typedef Input_Modifier_Set system_get_keyboard_modifiers_type(Arena* arena);
 typedef void system_set_key_mode_type(Key_Mode mode);
 typedef void system_set_source_mixer_type(void* ctx, Audio_Mix_Sources_Function* mix_func);
@@ -166,6 +170,8 @@ system_memory_annotation_type *memory_annotation;
 system_show_mouse_cursor_type *show_mouse_cursor;
 system_set_fullscreen_type *set_fullscreen;
 system_is_fullscreen_type *is_fullscreen;
+system_set_maximized_type *set_maximized;
+system_is_maximized_type *is_maximized;
 system_get_keyboard_modifiers_type *get_keyboard_modifiers;
 system_set_key_mode_type *set_key_mode;
 system_set_source_mixer_type *set_source_mixer;
@@ -225,6 +231,8 @@ internal Memory_Annotation system_memory_annotation(Arena* arena);
 internal void system_show_mouse_cursor(i32 show);
 internal b32 system_set_fullscreen(b32 full_screen);
 internal b32 system_is_fullscreen(void);
+internal b32 system_set_maximized(b32 maximized);
+internal b32 system_is_maximized(void);
 internal Input_Modifier_Set system_get_keyboard_modifiers(Arena* arena);
 internal void system_set_key_mode(Key_Mode mode);
 internal void system_set_source_mixer(void* ctx, Audio_Mix_Sources_Function* mix_func);
@@ -284,6 +292,8 @@ global system_memory_annotation_type *system_memory_annotation = 0;
 global system_show_mouse_cursor_type *system_show_mouse_cursor = 0;
 global system_set_fullscreen_type *system_set_fullscreen = 0;
 global system_is_fullscreen_type *system_is_fullscreen = 0;
+global system_set_maximized_type *system_set_maximized = 0;
+global system_is_maximized_type *system_is_maximized = 0;
 global system_get_keyboard_modifiers_type *system_get_keyboard_modifiers = 0;
 global system_set_key_mode_type *system_set_key_mode = 0;
 global system_set_source_mixer_type *system_set_source_mixer = 0;

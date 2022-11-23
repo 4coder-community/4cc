@@ -19,6 +19,7 @@ keys_global = {
     { "build_in_build_panel",          "M", "Alt" },
     { "goto_first_jump",               "M", "Alt", "Shift" },
     { "toggle_filebar",                "B", "Alt" },
+    { "toggle_maximized",	           "Semicolon", "Alt" },
     { "execute_any_cli",               "Z", "Alt" },
     { "execute_previous_cli",          "Z", "Alt", "Shift" },
     { "command_lister",                "X", "Alt" },

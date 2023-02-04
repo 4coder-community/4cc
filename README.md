@@ -16,7 +16,7 @@ Welcome to the 4coder community repository.
 ## Linux
 > tested on Ubuntu 22.04:
 
-1. Get tequired libraries (apt names):
+1. Get required libraries (apt names):
     - `$ sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev`
 2. Use the `package-linux.sh` script to build and package an application
    1. `$ cd 4cc/code`

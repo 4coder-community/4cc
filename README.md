@@ -7,11 +7,11 @@ Welcome to the 4coder community repository.
 ## Windows
 1. Setup the MSVC toolchain in your environment, this can be done with the `code/custom/bin/setup_cl_x64.bat` script
 2. call the `package.bat` script from the code directory
-   1. `$ cd 4cc/code`
-   2. `./bin/package.bat`
+   1. `$ cd 4cc\code`
+   2. `.\bin\package.bat`
 3. You can also use the `build.bat` script if you want just build the binaries, this does not copy the default config, fonts and bindings
-   1. `$ cd 4cc/code`
-   2. `$ ./bin/build.bat`
+   1. `$ cd 4cc\code`
+   2. `$ .\bin\build.bat`
 
 ## Linux
 > tested on Ubuntu 22.04:

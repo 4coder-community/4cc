@@ -9,7 +9,7 @@ Welcome to the 4coder community repository.
 2. call the `package.bat` script from the code directory
    1. `$ cd 4cc\code`
    2. `.\bin\package.bat`
-3. You can also use the `build.bat` script if you want just build the binaries, this does not copy the default config, fonts and bindings
+3. You can also use the `build.bat` script if you want just build the binaries, this does not copy the default config, fonts and bindings, so you'll still still need to call the packaging script first, copy the files under `current_dist...` over to the `build` directory, then run the build script
    1. `$ cd 4cc\code`
    2. `$ .\bin\build.bat`
 
@@ -22,7 +22,7 @@ Welcome to the 4coder community repository.
    1. `$ cd 4cc/code`
    2. `$ ./bin/package-linux.sh`
 
-3. You can also use the `build-linux.sh` script if you want just build the binaries, this does not copy the default config, fonts and bindings
+3. You can also use the `build-linux.sh` script if you want just build the binaries, same as on Windows
    1. `$ cd 4cc/code`
    2. `$ ./bin/build-linux.sh`
 

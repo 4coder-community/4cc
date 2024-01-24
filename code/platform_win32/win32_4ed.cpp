@@ -172,7 +172,6 @@ struct Win32_Vars{
     String_Const_u8 binary_path;
     
     b8 clip_catch_all;
-    b8 next_clipboard_is_self;
     DWORD clipboard_sequence;
     Plat_Handle clip_wakeup_timer;
     
@@ -446,7 +445,6 @@ win32_post_clipboard(Arena *scratch, char *text, i32 len){
             dest[len] = 0;
             GlobalUnlock(memory_handle);
             SetClipboardData(CF_TEXT, memory_handle);
-            win32vars.next_clipboard_is_self = true;
         }
         CloseClipboard();
     }
@@ -458,15 +456,11 @@ system_get_clipboard_sig(){
     DWORD new_number = GetClipboardSequenceNumber();
     if (new_number != win32vars.clipboard_sequence){
         win32vars.clipboard_sequence = new_number;
-        if (win32vars.next_clipboard_is_self){
-            win32vars.next_clipboard_is_self = false;
-        }
-        else{
-            for (i32 R = 0; R < 8; ++R){
-                result = win32_read_clipboard_contents(win32vars.tctx, arena);
-                if (result.str == 0){
-                    break;
-                }
+        
+        for (i32 R = 0; R < 8; ++R){
+            result = win32_read_clipboard_contents(win32vars.tctx, arena);
+            if (result.str == 0){
+                break;
             }
         }
     }
@@ -1952,24 +1946,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     }
     win32vars.clip_wakeup_timer = system_wake_up_timer_create();
     win32vars.clipboard_sequence = 0;
-    win32vars.next_clipboard_is_self = 0;
-#if 0
-    if (win32vars.clipboard_sequence == 0){
-        Scratch_Block scratch(win32vars.tctx);
-        win32_post_clipboard(scratch, "", 0);
-        win32vars.clipboard_sequence = GetClipboardSequenceNumber();
-        win32vars.next_clipboard_is_self = 0;
-        if (win32vars.clipboard_sequence == 0){
-            log_os(" failure\n");
-        }
-        else{
-            log_os(" got first sequence number\n");
-        }
-    }
-    else{
-        log_os(" no initial sequence number\n");
-    }
-#endif
     
     log_os("Setting up keyboard layout...\n");
     win32vars.kl_universal = LoadKeyboardLayoutW(L"00000409", 0);

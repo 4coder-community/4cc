@@ -476,7 +476,7 @@ prj_generate_project(Arena *scratch, String8 script_path, String8 script_file, S
         fprintf(out, "\".*\",\n");
         fprintf(out, "};\n");
         fprintf(out, "load_paths_base = {\n");
-        fprintf(out, " { \".\", .relative = true, .recursive = true, },\n");
+        fprintf(out, " { .path = \".\", .relative = true, .recursive = true, },\n");
         fprintf(out, "};\n");
         fprintf(out, "load_paths = {\n");
         fprintf(out, " .win = load_paths_base,\n");
@@ -498,8 +498,8 @@ prj_generate_project(Arena *scratch, String8 script_path, String8 script_file, S
         fprintf(out, "};\n");
         
         fprintf(out, "fkey_command = {\n");
-        fprintf(out, ".F1 = \"run\";\n");
-        fprintf(out, ".F2 = \"run\";\n");
+        fprintf(out, ".F1 = \"build\",\n");
+        fprintf(out, ".F2 = \"run\",\n");
         fprintf(out, "};\n");
         
         fclose(out);

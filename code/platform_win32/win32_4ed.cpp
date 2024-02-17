@@ -1611,7 +1611,7 @@ win32_gl_create_window(HWND *wnd_out, HGLRC *context_out, DWORD style, RECT rect
                 /* 0*/WGL_DRAW_TO_WINDOW_ARB, TRUE,
                 /* 2*/WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
                 /* 4*/WGL_SUPPORT_OPENGL_ARB, TRUE,
-                /* 6*/WGL_DOUBLE_BUFFER_ARB, false,
+                /* 6*/WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
                 /* 8*/WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
                 /*10*/WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB, GL_TRUE,
                 /*12*/0,

@@ -130,10 +130,11 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 di
         box.right = p.x + dim.x;
         box.top = p.y;
         box.bottom = p.y + dim.y;
-        box.front = p.z;
-        box.back = p.z + dim.z;
-        // TODO(simon): Try to make the font renderer several texture in the array to verify this works.
-        g_directx.context->UpdateSubresource( tex->pointer, 0, &box, data, dim.x, dim.x * dim.y );
+        box.front = 0;
+        box.back = 1;
+
+        u32 sub_resource_index = D3D11CalcSubresource( 0 /* MipSlice */, p.z /* ArraySlice */, 1 /* MipLevels */ );
+        g_directx.context->UpdateSubresource( tex->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
     }
     
     return(result);

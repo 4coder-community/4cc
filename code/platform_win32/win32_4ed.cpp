@@ -12,7 +12,7 @@
 // #define FPS 144
 // #define frame_useconds (1000000 / FPS)
 
-#define WIN32_DIRECTX
+#define WIN32_DX11
 
 #include <stdio.h>
 
@@ -657,7 +657,7 @@ os_popup_error(char *title, char *message){
 #include "4ed_font_provider_freetype.h"
 #include "4ed_font_provider_freetype.cpp"
 
-#if defined( WIN32_DIRECTX )
+#if defined( WIN32_DX11 )
 #include "win32_directx.cpp"
 #else
 #include "win32_opengl.cpp"
@@ -825,28 +825,28 @@ win32_resize(i32 width, i32 height){
         target.width = width;
         target.height = height;
         
-#if defined( WIN32_DIRECTX )
+#if defined( WIN32_DX11 )
         
         HRESULT hr = S_OK;
         ID3D11Texture2D* frame_buffer = 0;
         
         do {
             
-            if ( g_directx.initialized ) {
+            if ( g_dx11.initialized ) {
                 
-                if ( g_directx.render_target_view ) {
-                    g_directx.render_target_view->Release( );
-                    g_directx.render_target_view = 0;
+                if ( g_dx11.render_target_view ) {
+                    g_dx11.render_target_view->Release( );
+                    g_dx11.render_target_view = 0;
                 }
                 
-                hr = g_directx.swap_chain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0 );
+                hr = g_dx11.swap_chain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0 );
                 
                 if ( FAILED( hr ) ) {
                     log_os( "Failed to resize the swap chain buffers.\n" );
                     break;
                 }
                 
-                hr = g_directx.swap_chain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), ( void** ) &frame_buffer );
+                hr = g_dx11.swap_chain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), ( void** ) &frame_buffer );
                 
                 if ( FAILED( hr ) ) {
                     log_os( "Failled to get the swap chain back buffer.\n" );
@@ -854,16 +854,17 @@ win32_resize(i32 width, i32 height){
                 }
                 
                 D3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc = { 0 };
-                // NOTE(simon): 4coder checks for sRGB support but never actually enables it in the
-                // OpenGL version. Note that enabling it would require to convert collors passed to the
-                // shader to linear (when using sRBG back buffer, the shader values must be linear
-                // values). This would be more problematic than just passing linear values as the
-                // blending wouldn't produce the same result as with sRGB off.
+                // NOTE(simon, 28/02/24): 4coder checks for sRGB support but never actually enables
+                // it in the OpenGL version (never calls glEnable( GL_FRAMEBUFFER_SRGB ) ).
+                // Note that enabling it would require to convert collors
+                // passed to the shader to linear (when using sRBG back buffer, the shader values
+                // must be linear values). This would be more problematic than just passing linear
+                // values as the blending wouldn't produce the same result as with sRGB off.
                 // render_target_view_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
                 render_target_view_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
                 render_target_view_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
                 
-                hr = g_directx.device->CreateRenderTargetView( ( ID3D11Resource* ) frame_buffer, &render_target_view_desc, &g_directx.render_target_view );
+                hr = g_dx11.device->CreateRenderTargetView( ( ID3D11Resource* ) frame_buffer, &render_target_view_desc, &g_dx11.render_target_view );
                 
                 if ( FAILED( hr ) ) {
                     log_os( "Failed to create a render target view.\n" );
@@ -880,12 +881,12 @@ win32_resize(i32 width, i32 height){
         
         if ( FAILED( hr ) ) {
             
-            if ( g_directx.render_target_view ) {
-                g_directx.render_target_view->Release( );
-                g_directx.render_target_view = 0;
+            if ( g_dx11.render_target_view ) {
+                g_dx11.render_target_view->Release( );
+                g_dx11.render_target_view = 0;
             }
             
-            // NOTE(simon): Failing here means no rendering possible, so we exit.
+            // NOTE(simon, 28/02/24): Failing here means no rendering possible, so we exit.
             exit( 1 );
         }
         
@@ -1749,7 +1750,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
            window_rect.bottom - window_rect.top,
            ((window_style & WS_MAXIMIZE) != 0));
     
-#if defined( WIN32_DIRECTX )
+#if defined( WIN32_DX11 )
     if( !win32_gl_create_window( &win32vars.window_handle, window_style, window_rect ) ) {
         exit(1);
     }
@@ -2042,9 +2043,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
         win32vars.lctrl_lalt_is_altgr = (b8)result.lctrl_lalt_is_altgr;
         
         // NOTE(allen): render
-#if defined( WIN32_DIRECTX )
+#if defined( WIN32_DX11 )
         gl_render(&target);
-        g_directx.swap_chain->Present( 1, 0 );
+        g_dx11.swap_chain->Present( 1, 0 );
 #else
         HDC hdc = GetDC(win32vars.window_handle);
         gl_render(&target);
@@ -2086,7 +2087,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
         win32vars.first = false;
     }
     
-#if defined( WIN32_DIRECTX ) && !SHIP_MODE
+#if defined( WIN32_DX11 ) && !SHIP_MODE
     win32_gl_cleanup( );
 #endif
     

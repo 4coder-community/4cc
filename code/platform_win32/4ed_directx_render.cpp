@@ -1,7 +1,7 @@
 
-#define DIRECTX_MAX_TEXTURE_COUNT 32
+#define DX11_MAX_TEXTURE_COUNT 32
 
-struct DirectXTexture {
+struct DX11Texture {
     ID3D11Texture2D* pointer;
     ID3D11ShaderResourceView* view;
 };
@@ -13,7 +13,7 @@ struct GL_Program {
     b8 valid;
 };
 
-struct DirectX {
+struct DX11 {
     b8 initialized;
     ID3D11Device1* device;
     ID3D11DeviceContext1* context;
@@ -24,24 +24,25 @@ struct DirectX {
     ID3D11Buffer* vertex_buffer;
     ID3D11Buffer* constants_buffer;
     
-    // NOTE(simon): To keep the API the same since the OpenGL texture handle are store in other places
-    // than the graphics parts (e.g. in the font Face struct), we create an array of textures, and use
-    // the indices as texture handles.
-    DirectXTexture textures[ DIRECTX_MAX_TEXTURE_COUNT + 1 ];
-    // NOTE(simon): First slot in the array should not be used so we can consider an index of 0 to be invalid.
-    // OpenGL should not return 0 for texture handle, so we sort of do the same.
+    // NOTE(simon, 28/02/24): To keep the API the same since the OpenGL texture handle are store in
+    // other places than the graphics parts (e.g. in the font Face struct), we create an array of
+    // textures, and use the indices as texture handles.
+    DX11Texture textures[ DX11_MAX_TEXTURE_COUNT + 1 ];
+    // NOTE(simon, 28/02/24): The first slot in the array should not be used so we can consider an
+    // index of 0 to be invalid. OpenGL should not return 0 for texture handle, so we sort of do
+    // the same.
     u32 texture_count;
 };
 
-global DirectX g_directx = { };
+global DX11 g_dx11 = { };
 
-// NOTE(simon): Passing 0 for texid use the reserved texture in the array, and passing a resource
-// view of zero unbinds the resource.
+// NOTE(simon, 28/02/24): Passing 0 for texid use the reserved texture in the array, and passing a
+// resource view of zero unbinds the resource.
 internal void
 gl__bind_texture(Render_Target *t, i32 texid){
     if (t->bound_texture != texid){
-        DirectXTexture* texture = g_directx.textures + texid;
-        g_directx.context->PSSetShaderResources( 0, 1, &texture->view );
+        DX11Texture* texture = g_dx11.textures + texid;
+        g_dx11.context->PSSetShaderResources( 0, 1, &texture->view );
         t->bound_texture = texid;
     }
 }
@@ -50,8 +51,8 @@ internal void
 gl__bind_any_texture(Render_Target *t){
     if (t->bound_texture == 0){
         Assert(t->fallback_texture_id != 0);
-        DirectXTexture* texture = g_directx.textures + t->fallback_texture_id;
-        g_directx.context->PSSetShaderResources( 0, 1, &texture->view );
+        DX11Texture* texture = g_dx11.textures + t->fallback_texture_id;
+        g_dx11.context->PSSetShaderResources( 0, 1, &texture->view );
         t->bound_texture = t->fallback_texture_id;
     }
 }
@@ -61,16 +62,16 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
     
     u32 texid = 0;
     
-    if ( g_directx.texture_count < DIRECTX_MAX_TEXTURE_COUNT + 1 ) {
+    if ( g_dx11.texture_count < ArrayCount( g_dx11.textures ) ) {
         
-        texid = g_directx.texture_count;
-        g_directx.texture_count++;
+        texid = g_dx11.texture_count;
+        g_dx11.texture_count++;
         
     } else {
         
-        for ( u32 i = 1; i < g_directx.texture_count; i++ ) {
+        for ( u32 i = 1; i < g_dx11.texture_count; i++ ) {
             
-            DirectXTexture* texture = g_directx.textures + i;
+            DX11Texture* texture = g_dx11.textures + i;
             
             if ( !texture->pointer && !texture->view ) {
                 texid = i;
@@ -81,7 +82,7 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
     
     if ( texid ) {
         
-        DirectXTexture* texture = g_directx.textures + texid;
+        DX11Texture* texture = g_dx11.textures + texid;
         Assert( texture->pointer == 0 );
         Assert( texture->view == 0 );
         
@@ -99,8 +100,8 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
         // NOTE(simon, 28/02/24): I initialize the texture with zeros. In practice it doesn't seem
         // to matter, but since the shader use a bilinear filter, the unitialized data in the
         // texture could change the result of the filtering for texel at the edge of a character.
-        // I did some test with the rectangle packer to have a border around character but got
-        // the exact same render, so I doesn't matter much.
+        // I did some tests with the rectangle packer to have a border around character but got the
+        // exact same render, so It doesn't matter much.
         D3D11_SUBRESOURCE_DATA* texture_data = push_array_zero( &win32vars.frame_arena, D3D11_SUBRESOURCE_DATA, dim.z );
         u8* initial_data = push_array_zero( &win32vars.frame_arena, u8, dim.x * dim.y );
         
@@ -109,18 +110,18 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
             texture_data[ i ].SysMemPitch = dim.x;
         }
         
-        HRESULT hr = g_directx.device->CreateTexture2D( &texture_desc, texture_data, &texture->pointer );
+        HRESULT hr = g_dx11.device->CreateTexture2D( &texture_desc, texture_data, &texture->pointer );
         
         pop_array( &win32vars.frame_arena, u8, dim.x * dim.y );
         pop_array( &win32vars.frame_arena, D3D11_SUBRESOURCE_DATA, dim.z );
         
         if ( SUCCEEDED( hr ) ) {
-            hr = g_directx.device->CreateShaderResourceView( ( ID3D11Resource* ) texture->pointer, 0, &texture->view );
+            hr = g_dx11.device->CreateShaderResourceView( ( ID3D11Resource* ) texture->pointer, 0, &texture->view );
         }
         
         if ( FAILED( hr ) ) {
             
-            // NOTE(simon ,28/02/24): When we fail, we donc decrement the texture count, but the
+            // NOTE(simon, 28/02/24): When we fail, we donc decrement the texture count, but the
             // loop at the beginning of the function will reuse texture when
             // texture_count == DIRECTX_MAX_TEXTURE_COUNT.
             texid = 0;
@@ -143,21 +144,21 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
 internal b32
 gl__fill_texture(Texture_Kind texture_kind, u32 texid, Vec3_i32 p, Vec3_i32 dim, void *data){
     
-    // NOTE(simon): The OpenGL version always returns false.
+    // NOTE(simon, 28/02/24): The OpenGL version always returns false.
     b32 result = false;
     
-    // NOTE(simon): In the OpenGL version, if we don't pass zero as texture handle, the function
-    // works on the currently bound texture. In directx we need to get the texture pointer. We
-    // could retrieve that from Render_Target->bound_texture, but we don't have that as a parameter
-    // to this function and don't want to change the signature since it's used by the font
-    // rendering code and other platforms. Fortunately the only call that specified 0 for the
+    // NOTE(simon, 28/02/24): In the OpenGL version, if we pass zero as texture handle, the
+    // function works on the currently bound texture. In directx we need to get the texture pointer.
+    // We could retrieve that from Render_Target->bound_texture, but we don't have that as a
+    // parameter to this function and don't want to change the signature since it's used by the
+    // font rendering code and other platforms. Fortunately the only call that specified 0 for the
     // texture handle was for the creation of the fallback texture in gl_render, and we can modify
     // that call to pass the fallback texture handle.
     Assert( texid != 0 ); 
     
     if (dim.x > 0 && dim.y > 0 && dim.z > 0){
         
-        DirectXTexture* texture = g_directx.textures + texid;
+        DX11Texture* texture = g_dx11.textures + texid;
         
         D3D11_BOX box = { };
         box.left = p.x;
@@ -168,7 +169,7 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texid, Vec3_i32 p, Vec3_i32 dim,
         box.back = 1;
         
         u32 sub_resource_index = D3D11CalcSubresource( 0 /* MipSlice */, p.z /* ArraySlice */, 1 /* MipLevels */ );
-        g_directx.context->UpdateSubresource( texture->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
+        g_dx11.context->UpdateSubresource( texture->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
     }
     
     return(result);
@@ -178,7 +179,7 @@ internal void gl__free_texture( u32 texid ) {
     
     if ( texid ) {
         
-        DirectXTexture* texture = g_directx.textures + texid;
+        DX11Texture* texture = g_dx11.textures + texid;
         
         if ( texture->view ) {
             texture->view->Release( );
@@ -194,7 +195,7 @@ internal void gl__free_texture( u32 texid ) {
 
 char *gl__vertex = R"foo(
 
-// NOTE(simon): The layout of this is (constants are store in 16 bytes vectors (4 floats))
+// NOTE(simon, 28/02/24): The layout of this is (constants are store in 16 bytes vectors (4 floats))
 // vector1: view_m._11, view_m._12, 0, 0
 // vector2: view_m._21, view_m._22, view_t.x, view_t.y
 cbuffer constants : register( b0 ) {
@@ -223,7 +224,7 @@ output_t main(input_t input) {
     output_t output;
 
     output.position = float4( mul( view_m, ( input.vertex_p - view_t ) ), 0.0, 1.0 );
-    // NOTE(simon): The input colors are BGRA, we need them as RGBA.
+    // NOTE(simon, 28/02/24): The input colors are BGRA, we need them as RGBA.
     output.color = input.vertex_c.zyxw;
     output.uvw = input.vertex_t;
 	output.xy = input.vertex_p;
@@ -278,10 +279,10 @@ float4 main( input_t input ) : SV_TARGET {
 }
 )foo";
 
-// NOTE(simon): This function is not generic. It can compile any shader, but the vertex input
-// layout is fixed. 4coder only has one vertex format and shader, so we could remove this function
-// and move its content in the win32_gl_create_window. I removed the header parameter as it's not
-// useful in directx.
+// NOTE(simon, 28/02/24): This function is not generic. It can compile any shader, but the vertex
+// input layout is fixed. 4coder only has one vertex format and shader, so we could remove this
+// function and move its content in the win32_gl_create_window. I removed the header parameter as
+// it's not useful in directx.
 internal GL_Program
 gl__make_program( char* vertex, char* pixel ) {
     
@@ -324,7 +325,7 @@ gl__make_program( char* vertex, char* pixel ) {
             break;
         }
         
-        hr = g_directx.device->CreateVertexShader( vs_blob->GetBufferPointer( ), vs_blob->GetBufferSize( ), 0, &vertex_shader );
+        hr = g_dx11.device->CreateVertexShader( vs_blob->GetBufferPointer( ), vs_blob->GetBufferSize( ), 0, &vertex_shader );
         
         if ( FAILED( hr ) ) {
             log_os( "Failed to create a vertex shader.\n" );
@@ -354,7 +355,7 @@ gl__make_program( char* vertex, char* pixel ) {
         layout_desc[ 3 ].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
         layout_desc[ 3 ].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
         
-        hr = g_directx.device->CreateInputLayout( layout_desc, ArrayCount( layout_desc ), vs_blob->GetBufferPointer( ), vs_blob->GetBufferSize( ), &input_layout );
+        hr = g_dx11.device->CreateInputLayout( layout_desc, ArrayCount( layout_desc ), vs_blob->GetBufferPointer( ), vs_blob->GetBufferSize( ), &input_layout );
         
         if ( FAILED( hr ) ) {
             log_os( "Failed to create input layout.\n" );
@@ -376,7 +377,7 @@ gl__make_program( char* vertex, char* pixel ) {
             break;
         }
         
-        hr = g_directx.device->CreatePixelShader( ps_blob->GetBufferPointer( ), ps_blob->GetBufferSize( ), 0, &pixel_shader );
+        hr = g_dx11.device->CreatePixelShader( ps_blob->GetBufferPointer( ), ps_blob->GetBufferSize( ), 0, &pixel_shader );
         
         if ( FAILED( hr ) ) {
             log_os( "Failed to create a pixel shader.\n" );
@@ -441,39 +442,41 @@ gl_render(Render_Target *t){
     
     if (first_call){
         
-        // NOTE(simon): Most of the code here has been moved in win32_gl_create_window because if
-        // that code fails we should exit the application directly.
+        // NOTE(simon, 28/02/24): Most of the code here has been moved in win32_gl_create_window
+        // because if that code fails we should exit the application directly.
         first_call = false;
         
         u32 stride = sizeof( Render_Vertex );
         u32 offset = 0;
         
-        g_directx.context->IASetVertexBuffers( 0, 1, &g_directx.vertex_buffer, &stride, &offset );
-        g_directx.context->IASetInputLayout( g_directx.gpu_program.layout );
-        g_directx.context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+        g_dx11.context->IASetVertexBuffers( 0, 1, &g_dx11.vertex_buffer, &stride, &offset );
+        g_dx11.context->IASetInputLayout( g_dx11.gpu_program.layout );
+        g_dx11.context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
         
-        g_directx.context->VSSetShader( g_directx.gpu_program.vertex, 0, 0 );
-        g_directx.context->VSSetConstantBuffers( 0, 1, &g_directx.constants_buffer );
+        g_dx11.context->VSSetShader( g_dx11.gpu_program.vertex, 0, 0 );
+        g_dx11.context->VSSetConstantBuffers( 0, 1, &g_dx11.constants_buffer );
         
-        g_directx.context->PSSetShader( g_directx.gpu_program.pixel, 0, 0 );
-        g_directx.context->PSSetSamplers( 0, 1, &g_directx.sampler );
+        g_dx11.context->PSSetShader( g_dx11.gpu_program.pixel, 0, 0 );
+        g_dx11.context->PSSetSamplers( 0, 1, &g_dx11.sampler );
         
         {
             t->fallback_texture_id = gl__get_texture(V3i32(2, 2, 1), TextureKind_Mono);
             u8 white_block[] = { 0xFF, 0xFF, 0xFF, 0xFF, };
-            // NOTE(simon): Passing the fallback texture, because we can't rely on the fact that
-            // gl__get_texture has bound the fallback texture.
+            // NOTE(simon, 28/02/24): Passing the fallback texture, because we can't rely on the
+            // fact that gl__get_texture has bound the fallback texture.
             gl__fill_texture(TextureKind_Mono, t->fallback_texture_id, V3i32(0, 0, 0), V3i32(2, 2, 1), white_block);
         }
     }
     
-    // NOTE(simon): OMSetRenderTargets needs to be set each frame when using a FLIP swap chain.
-    g_directx.context->OMSetRenderTargets( 1, &g_directx.render_target_view, 0 );
+    // NOTE(simon, 28/02/24): OMSetRenderTargets needs to be set each frame when using a FLIP swap
+    // chain.
+    g_dx11.context->OMSetRenderTargets( 1, &g_dx11.render_target_view, 0 );
     
     i32 width = t->width;
     i32 height = t->height;
     
-    // NOTE(simon): Viewport (0, 0) is top left in directx. Important for viewport and scissor calls.
+    // NOTE(simon, 28/02/24): Viewport (0, 0) is top left in directx. Important for viewport and
+    // scissor calls.
     
     D3D11_VIEWPORT viewport = {
         0, // TopLeftX
@@ -484,7 +487,7 @@ gl_render(Render_Target *t){
         1// MaxDepth
     };
     
-    g_directx.context->RSSetViewports( 1, &viewport );
+    g_dx11.context->RSSetViewports( 1, &viewport );
     
     D3D11_RECT scissor = {
         0, // left
@@ -493,26 +496,29 @@ gl_render(Render_Target *t){
         height // bottom
     };
     
-    g_directx.context->RSSetScissorRects( 1, &scissor );
+    g_dx11.context->RSSetScissorRects( 1, &scissor );
     
     float magenta[ 4 ] = { 1.0f, 0.0f, 1.0f, 1.0f };
-    g_directx.context->ClearRenderTargetView( g_directx.render_target_view, magenta );
+    g_dx11.context->ClearRenderTargetView( g_dx11.render_target_view, magenta );
     
-    // NOTE(simon): The constants (uniforms) were set in the render loop in the OpenGL version.
-    // But since they don't vary between draw calls I moved the code before the render loop.
+    // NOTE(simon, 28/02/24): The constants (uniforms) were set in the render loop in the OpenGL
+    // version. But since they don't vary between draw calls I moved the code before the render
+    // loop.
     D3D11_MAPPED_SUBRESOURCE constants_map = { };
-    HRESULT hr = g_directx.context->Map( ( ID3D11Resource* ) g_directx.constants_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constants_map );
+    HRESULT hr = g_dx11.context->Map( ( ID3D11Resource* ) g_dx11.constants_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constants_map );
     
-    // NOTE(simon): The layout of the constants buffer was a bit confusing. This link explains a
-    // little about how data is laid out: https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-packing-rules
-    // The article doesn't explain anything about matrices. What I found out while making this work is
-    // that each row or column (depending on if we use column or row major matrices) of a matrix
+    // NOTE(simon, 28/02/24): The layout of the constants buffer was a bit confusing. This link
+    // explains a little about how data is laid out:
+    // https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/dx-graphics-hlsl-packing-rules
+    // The article doesn't explain anything about matrices. What I found out while making this work
+    // is that each row or column (depending on if we use column or row major matrices) of a matrix
     // needs to start on a new 16 bytes vector. For a 2 by 2 matrix, this means that there are two
     // register elements at the end of the first vector that aren't used.
     // Another thing is that the second vector only needs the first two elements for the matrix,
     // so the two elements we want to put next can be in the same vector.
     
-    // NOTE(simon): The code here could be shorter, but I prefer to make it clear what's happening.
+    // NOTE(simon, 28/02/24): The code here could be shorter, but I prefer to make it clear what's
+    // happening.
     f32 view_m[ 4 ] = {
         2.0f / width, 0,
         0, -2.0f / height
@@ -532,7 +538,7 @@ gl_render(Render_Target *t){
     vector_2[ 2 ] = view_t[ 0 ];
     vector_2[ 3 ] = view_t[ 1 ];
     
-    g_directx.context->Unmap( ( ID3D11Resource* ) g_directx.constants_buffer, 0 );
+    g_dx11.context->Unmap( ( ID3D11Resource* ) g_dx11.constants_buffer, 0 );
     
     gl__bind_texture( t, 0 );
     
@@ -557,7 +563,7 @@ gl_render(Render_Target *t){
         group_scissor.top = box.y0;
         group_scissor.bottom = box.y1;
         
-        g_directx.context->RSSetScissorRects( 1, &group_scissor );
+        g_dx11.context->RSSetScissorRects( 1, &group_scissor );
         
         i32 vertex_count = group->vertex_list.vertex_count;
         if (vertex_count > 0){
@@ -569,21 +575,22 @@ gl_render(Render_Target *t){
                 gl__bind_any_texture(t);
             }
             
-            // NOTE(simon): We fill the buffer, draw what we filled and then do the next group,
-            // which allows to always start drawing from vertex 0. Alternatively we could do a pass
-            // to fill the vertex buffer completly so we only map the vertex buffer once, and then
-            // a second pass that just execute the draw calls. It doesn't seems necessary since we
-            // have less than 10 draw call.
+            // NOTE(simon, 28/02/24): We fill the buffer, draw what we filled and then do the next
+            // group, which allows to always start drawing from vertex 0. Alternatively we could
+            // do a pass to fill the vertex buffer completly so we only map the vertex buffer once,
+            // and then a second pass that just execute the draw calls. It doesn't seems necessary
+            // since we have less than 10 draw call.
             
             D3D11_MAPPED_SUBRESOURCE vertex_map = { };
-            hr = g_directx.context->Map( ( ID3D11Resource* ) g_directx.vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertex_map );
+            hr = g_dx11.context->Map( ( ID3D11Resource* ) g_dx11.vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &vertex_map );
             
             if ( FAILED( hr ) ) {
-                // NOTE(simon): It's improbable that Map will fail, but if it does we just stop
-                // rendering, and we'll try on the next frame. We could just skip the group and try
-                // with the next (using 'continue' instead of 'break'), but Map would probably fail
-                // again. Waiting for the next frame "might" work. I don't really know. We could
-                // also just exit the application assuming we won't be able to render anything.
+                // NOTE(simon, 28/02/24): It's improbable that Map will fail, but if it does we
+                // just stop rendering, and we'll try on the next frame. We could just skip the
+                // group and try with the next (using 'continue' instead of 'break'), but Map would
+                // probably fail again. Waiting for the next frame "might" work. I don't really
+                // know. We could also just exit the application assuming we won't be able to
+                // render anything.
                 break;
             }
             
@@ -598,9 +605,9 @@ gl_render(Render_Target *t){
                 bytes += size;
             }
             
-            g_directx.context->Unmap( ( ID3D11Resource* ) g_directx.vertex_buffer, 0 );
+            g_dx11.context->Unmap( ( ID3D11Resource* ) g_dx11.vertex_buffer, 0 );
             
-            g_directx.context->Draw( vertex_count, 0 );
+            g_dx11.context->Draw( vertex_count, 0 );
         }
     }
 }

@@ -13,7 +13,7 @@
 IDXGIDebug1* dxgi_debug;
 #endif
 
-#include "4ed_directx_render.cpp"
+#include "4ed_dx11_render.cpp"
 
 internal LRESULT CALL_CONVENTION
 win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -59,7 +59,7 @@ win32_gl_create_window(HWND *wnd_out, DWORD style, RECT rect){
         
         // NOTE(simon, 28/02/24): There is nothing in the code suggesting that this function could
         // be called several time. If it is called several time, we would need to make sure that
-        // we cleaned up previous DirectX resources. The reason this function could be called twice
+        // we cleaned up previous dx11 resources. The reason this function could be called twice
         // would be if it failed previously, and in that case we clean up everything before
         // exiting the function so we should be good. Still we assume it's only ever call once.
         Assert( first_call );

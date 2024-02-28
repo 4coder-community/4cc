@@ -123,7 +123,7 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
             
             // NOTE(simon, 28/02/24): When we fail, we donc decrement the texture count, but the
             // loop at the beginning of the function will reuse texture when
-            // texture_count == DIRECTX_MAX_TEXTURE_COUNT.
+            // texture_count == DX11_MAX_TEXTURE_COUNT.
             texid = 0;
             
             if ( texture->pointer ) {

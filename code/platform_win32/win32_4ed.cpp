@@ -658,7 +658,7 @@ os_popup_error(char *title, char *message){
 #include "4ed_font_provider_freetype.cpp"
 
 #if defined( WIN32_DX11 )
-#include "win32_directx.cpp"
+#include "win32_dx11.cpp"
 #else
 #include "win32_opengl.cpp"
 #endif

@@ -80,7 +80,24 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
         texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         texture_desc.CPUAccessFlags = 0; // D3D11_CPU_ACCESS_WRITE;
         
-        HRESULT hr = g_directx.device->CreateTexture2D( &texture_desc, 0, &texture->pointer );
+        // NOTE(simon, 28/02/24): I initialize the texture with zeros. In practice it doesn't seem
+        // to matter, but since the shader use a bilinear filter, the unitialized data in the
+        // texture could change the result of the filtering for texel at the edge of a character.
+        // We should probably change the rectangle packer to have at least 1 pixel border around
+        // characters to avoid filtering between characters. But no one noticed it so far, so it's
+        // probably not important.
+        D3D11_SUBRESOURCE_DATA* texture_data = push_array_zero( &win32vars.frame_arena, D3D11_SUBRESOURCE_DATA, dim.z );
+        u8* initial_data = push_array_zero( &win32vars.frame_arena, u8, dim.x * dim.y );
+        
+        for ( i32 i = 0; i < dim.z; i++ ) {
+            texture_data[ i ].pSysMem = initial_data;
+            texture_data[ i ].SysMemPitch = dim.x;
+        }
+        
+        HRESULT hr = g_directx.device->CreateTexture2D( &texture_desc, texture_data, &texture->pointer );
+        
+        pop_array( &win32vars.frame_arena, u8, dim.x * dim.y );
+        pop_array( &win32vars.frame_arena, D3D11_SUBRESOURCE_DATA, dim.z );
         
         if ( SUCCEEDED( hr ) ) {
             hr = g_directx.device->CreateShaderResourceView( ( ID3D11Resource* ) texture->pointer, 0, &texture->view );
@@ -132,7 +149,7 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 di
         box.bottom = p.y + dim.y;
         box.front = 0;
         box.back = 1;
-
+        
         u32 sub_resource_index = D3D11CalcSubresource( 0 /* MipSlice */, p.z /* ArraySlice */, 1 /* MipLevels */ );
         g_directx.context->UpdateSubresource( tex->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
     }

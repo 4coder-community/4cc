@@ -842,14 +842,14 @@ win32_resize(i32 width, i32 height){
                 hr = g_directx.swap_chain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0 );
                 
                 if ( FAILED( hr ) ) {
-                    log_os( " Failed to resize the swap chain buffers.\n" );
+                    log_os( "Failed to resize the swap chain buffers.\n" );
                     break;
                 }
                 
                 hr = g_directx.swap_chain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), ( void** ) &frame_buffer );
                 
                 if ( FAILED( hr ) ) {
-                    log_os( " Failled to get the swap chain back buffer.\n" );
+                    log_os( "Failled to get the swap chain back buffer.\n" );
                     break;
                 }
                 
@@ -866,7 +866,7 @@ win32_resize(i32 width, i32 height){
                 hr = g_directx.device->CreateRenderTargetView( ( ID3D11Resource* ) frame_buffer, &render_target_view_desc, &g_directx.render_target_view );
                 
                 if ( FAILED( hr ) ) {
-                    log_os( " Failed to create a render target view.\n" );
+                    log_os( "Failed to create a render target view.\n" );
                     break;
                 }
             }

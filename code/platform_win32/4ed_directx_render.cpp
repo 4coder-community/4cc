@@ -30,12 +30,12 @@ struct DirectX {
     DirectXTexture textures[ DIRECTX_MAX_TEXTURE_COUNT + 1 ];
     // NOTE(simon): First slot in the array should not be used so we can consider an index of 0 to be invalid.
     // OpenGL should not return 0 for texture handle, so we sort of do the same.
-    u32 texture_count; // TODO(simon): We don't reuse freed texture handle. Use a free list instead ?
+    u32 texture_count;
 };
 
 global DirectX g_directx = { };
 
-// NOTE(simon): Passing 0 for textid use the reserved texture in the array, and passing a resource
+// NOTE(simon): Passing 0 for texid use the reserved texture in the array, and passing a resource
 // view of zero unbinds the resource.
 internal void
 gl__bind_texture(Render_Target *t, i32 texid){
@@ -59,13 +59,29 @@ gl__bind_any_texture(Render_Target *t){
 internal u32
 gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
     
-    u32 tex = 0;
+    u32 texid = 0;
     
     if ( g_directx.texture_count < DIRECTX_MAX_TEXTURE_COUNT + 1 ) {
         
-        tex = g_directx.texture_count;
+        texid = g_directx.texture_count;
+        g_directx.texture_count++;
         
-        DirectXTexture* texture = g_directx.textures + tex;
+    } else {
+        
+        for ( u32 i = 1; i < g_directx.texture_count; i++ ) {
+            
+            DirectXTexture* texture = g_directx.textures + i;
+            
+            if ( !texture->pointer && !texture->view ) {
+                texid = i;
+                break;
+            }
+        }
+    }
+    
+    if ( texid ) {
+        
+        DirectXTexture* texture = g_directx.textures + texid;
         Assert( texture->pointer == 0 );
         Assert( texture->view == 0 );
         
@@ -83,9 +99,8 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
         // NOTE(simon, 28/02/24): I initialize the texture with zeros. In practice it doesn't seem
         // to matter, but since the shader use a bilinear filter, the unitialized data in the
         // texture could change the result of the filtering for texel at the edge of a character.
-        // We should probably change the rectangle packer to have at least 1 pixel border around
-        // characters to avoid filtering between characters. But no one noticed it so far, so it's
-        // probably not important.
+        // I did some test with the rectangle packer to have a border around character but got
+        // the exact same render, so I doesn't matter much.
         D3D11_SUBRESOURCE_DATA* texture_data = push_array_zero( &win32vars.frame_arena, D3D11_SUBRESOURCE_DATA, dim.z );
         u8* initial_data = push_array_zero( &win32vars.frame_arena, u8, dim.x * dim.y );
         
@@ -103,10 +118,12 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
             hr = g_directx.device->CreateShaderResourceView( ( ID3D11Resource* ) texture->pointer, 0, &texture->view );
         }
         
-        if ( SUCCEEDED( hr ) ) {
-            g_directx.texture_count++;
-        } else {
-            tex = 0;
+        if ( FAILED( hr ) ) {
+            
+            // NOTE(simon ,28/02/24): When we fail, we donc decrement the texture count, but the
+            // loop at the beginning of the function will reuse texture when
+            // texture_count == DIRECTX_MAX_TEXTURE_COUNT.
+            texid = 0;
             
             if ( texture->pointer ) {
                 texture->pointer->Release( );
@@ -120,11 +137,11 @@ gl__get_texture(Vec3_i32 dim, Texture_Kind texture_kind){
         }
     }
     
-    return(tex);
+    return(texid);
 }
 
 internal b32
-gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 dim, void *data){
+gl__fill_texture(Texture_Kind texture_kind, u32 texid, Vec3_i32 p, Vec3_i32 dim, void *data){
     
     // NOTE(simon): The OpenGL version always returns false.
     b32 result = false;
@@ -136,11 +153,11 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 di
     // rendering code and other platforms. Fortunately the only call that specified 0 for the
     // texture handle was for the creation of the fallback texture in gl_render, and we can modify
     // that call to pass the fallback texture handle.
-    Assert( texture != 0 ); 
+    Assert( texid != 0 ); 
     
     if (dim.x > 0 && dim.y > 0 && dim.z > 0){
         
-        DirectXTexture* tex = g_directx.textures + texture;
+        DirectXTexture* texture = g_directx.textures + texid;
         
         D3D11_BOX box = { };
         box.left = p.x;
@@ -151,26 +168,26 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 di
         box.back = 1;
         
         u32 sub_resource_index = D3D11CalcSubresource( 0 /* MipSlice */, p.z /* ArraySlice */, 1 /* MipLevels */ );
-        g_directx.context->UpdateSubresource( tex->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
+        g_directx.context->UpdateSubresource( texture->pointer, sub_resource_index, &box, data, dim.x, dim.x * dim.y );
     }
     
     return(result);
 }
 
-internal void gl__free_texture( u32 texture ) {
+internal void gl__free_texture( u32 texid ) {
     
-    if ( texture ) {
+    if ( texid ) {
         
-        DirectXTexture* tex = g_directx.textures + texture;
+        DirectXTexture* texture = g_directx.textures + texid;
         
-        if ( tex->view ) {
-            tex->view->Release( );
-            tex->view = 0;
+        if ( texture->view ) {
+            texture->view->Release( );
+            texture->view = 0;
         }
         
-        if ( tex->pointer ) {
-            tex->pointer->Release( );
-            tex->pointer = 0;
+        if ( texture->pointer ) {
+            texture->pointer->Release( );
+            texture->pointer = 0;
         }
     }
 }

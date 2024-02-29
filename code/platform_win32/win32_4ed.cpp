@@ -12,7 +12,7 @@
 // #define FPS 144
 // #define frame_useconds (1000000 / FPS)
 
-#define WIN32_DX11
+// #define WIN32_DX11
 
 #include <stdio.h>
 

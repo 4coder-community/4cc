@@ -552,6 +552,9 @@ gl_render(Render_Target *t){
     t->free_texture_first = 0;
     t->free_texture_last = 0;
     
+    D3D11_BUFFER_DESC vertex_buffer_desc = { };
+    g_dx11.vertex_buffer->GetDesc( &vertex_buffer_desc );
+    
     for (Render_Group *group = t->group_first;
          group != 0;
          group = group->next){
@@ -573,6 +576,43 @@ gl_render(Render_Target *t){
             }
             else{
                 gl__bind_any_texture(t);
+            }
+            
+            // NOTE(simon, 29/03/24): 4coder doesn't appear to clip character outside the screen
+            // horizontally. Even with line wrapping enabled, you can have cases where the line
+            // won't wrap, for example "{0,0,0,0,...}" with a lot of zero and no space will not
+            // wrap. The consequence of that is that we might send a lot of vertex data that's
+            // offscreen and the assumption about the vertex buffer size I made, can be wrong.
+            // So in this loop we release the previous vertex and create a new one when necessary.
+            u32 size_required = vertex_count * sizeof( Render_Vertex );
+            
+            if ( size_required > vertex_buffer_desc.ByteWidth ) {
+                
+                u32 new_size = vertex_buffer_desc.ByteWidth * 2;
+                
+                while ( new_size < size_required ) {
+                    new_size *= 2;
+                }
+                
+                // NOTE(simon, 29/03/24): Create a new buffer and only release the previous one if
+                // the creation succeeded. If the creation fails, we skip this vertex group, which
+                // means the user will see an empty panel, but at least we won't stop rendering.
+                D3D11_BUFFER_DESC new_vertex_buffer_desc = vertex_buffer_desc;
+                new_vertex_buffer_desc.ByteWidth = new_size;
+                ID3D11Buffer* new_vertex_buffer = 0;
+                hr = g_dx11.device->CreateBuffer( &new_vertex_buffer_desc, 0, &new_vertex_buffer );
+                
+                if ( FAILED( hr ) ) {
+                    continue;
+                }
+                
+                g_dx11.vertex_buffer->Release( );
+                g_dx11.vertex_buffer = new_vertex_buffer;
+                vertex_buffer_desc.ByteWidth = new_size;
+                
+                u32 stride = sizeof( Render_Vertex );
+                u32 offset = 0;
+                g_dx11.context->IASetVertexBuffers( 0, 1, &g_dx11.vertex_buffer, &stride, &offset );
             }
             
             // NOTE(simon, 28/02/24): We fill the buffer, draw what we filled and then do the next

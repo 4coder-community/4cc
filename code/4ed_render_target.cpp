@@ -146,22 +146,24 @@ draw_rectangle_outline(Render_Target *target, Rect_f32 rect, f32 roundness, f32 
     vertices[4].xy = V2f32(rect.x0, rect.y1);
     vertices[5].xy = V2f32(rect.x1, rect.y1);
     
-    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
-    // It would be better to use the current clip rect, but it's not available here. We could pass
-    // it down in the function signature if necessary.
-    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
-    b32 draw = false;
-    
     Vec2_f32 center = rect_center(rect);
     for (i32 i = 0; i < ArrayCount(vertices); i += 1){
         vertices[i].uvw = V3f32(center.x, center.y, roundness);
         vertices[i].color = color;
         vertices[i].half_thickness = half_thickness;
-        
-        draw = draw || rect_contains_point( target_rect, vertices[ i ].xy );
     }
     
-    draw = true;
+    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
+    // It would be better to use the current clip rect, but it's not available here. We could pass
+    // it down in the function signature if necessary.
+    // This is not in the loop to try minimize the impact it could have on performance when there
+    // are a lot of vertex (we don't test duplicated vertex positions).
+    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
+    b32 draw = false;
+    draw = draw || rect_contains_point( target_rect, vertices[ 0 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 1 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 2 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 5 ].xy );
     
     if ( draw ) {
         draw__write_vertices_in_current_group(target, vertices, ArrayCount(vertices));
@@ -248,20 +250,22 @@ draw_font_glyph(Render_Target *target, Face *face, u32 codepoint, Vec2_f32 p,
     vertices[3] = vertices[1];
     vertices[4] = vertices[2];
     
-    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
-    // It would be better to use the current clip rect, but it's not available here. We could pass
-    // it down in the function signature if necessary.
-    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
-    b32 draw = false;
-    
     for (i32 i = 0; i < ArrayCount(vertices); i += 1){
         vertices[i].color = color;
         vertices[i].half_thickness = 0.f;
-        
-        draw = draw || rect_contains_point( target_rect, vertices[ i ].xy );
     }
     
-    draw = true;
+    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
+    // It would be better to use the current clip rect, but it's not available here. We could pass
+    // it down in the function signature if necessary.
+    // This is not in the loop to try minimize the impact it could have on performance when there
+    // are a lot of vertex (we don't test duplicated vertex positions).
+    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
+    b32 draw = false;
+    draw = draw || rect_contains_point( target_rect, vertices[ 0 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 1 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 2 ].xy );
+    draw = draw || rect_contains_point( target_rect, vertices[ 5 ].xy );
     
     if ( draw ) {
         draw__write_vertices_in_current_group(target, vertices, ArrayCount(vertices));

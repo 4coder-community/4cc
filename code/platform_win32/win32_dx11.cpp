@@ -50,6 +50,8 @@ win32_gl_create_window(HWND *wnd_out, DWORD style, RECT rect){
     
     ID3D11Device* base_device = 0;
     ID3D11DeviceContext* base_device_context = 0;
+    IDXGIDevice1* dxgi_device = 0;
+    IDXGIAdapter* dxgi_adapter = 0;
     IDXGIFactory2* dxgi_factory = 0;
     
     ID3D11BlendState* blend_state = 0;
@@ -176,11 +178,29 @@ win32_gl_create_window(HWND *wnd_out, DWORD style, RECT rect){
             log_os( " sRBG back buffer supported.\n" );
         }
         
-        log_os( " Creating a IDXGIFactory2...\n" );
-        hr = CreateDXGIFactory( __uuidof( IDXGIFactory2 ), ( void** ) &dxgi_factory );
+        log_os( " Getting a IDXGIFactory2...\n" );
+        
+        log_os( "  Qurey for the IDXGIDevice1...\n" );
+        hr = device->QueryInterface( __uuidof( IDXGIDevice1 ), ( void** ) &dxgi_device );
         
         if ( FAILED( hr ) ) {
-            log_os( "  Failed.\n" );
+            log_os( "   Failed.\n" );
+            break;
+        }
+        
+        log_os( "  Getting the IDXGIAdapter...\n" );
+        dxgi_device->GetAdapter( &dxgi_adapter );
+        
+        if ( FAILED( hr ) ) {
+            log_os( "   Failed.\n" );
+            break;
+        }
+        
+        log_os( "  Getting the IDXGIFactor2...\n" );
+        dxgi_adapter->GetParent( __uuidof( IDXGIFactory2 ), ( void** ) &dxgi_factory );
+        
+        if ( FAILED( hr ) ) {
+            log_os( "   Failed.\n" );
             break;
         }
         
@@ -201,6 +221,13 @@ win32_gl_create_window(HWND *wnd_out, DWORD style, RECT rect){
         if ( FAILED( hr ) ) {
             log_os( "  Failed.\n" );
             break;
+        }
+        
+        log_os( " Prevent DXGI handling ALT + ENTER...\n" );
+        hr = dxgi_factory->MakeWindowAssociation( wnd, DXGI_MWA_NO_ALT_ENTER );
+        
+        if ( FAILED( hr ) ) {
+            log_os( "  Failed.\n" );
         }
         
         // NOTE(simon, 28/02/24): We setup alpha blending here as it's always on in 4coder.
@@ -391,6 +418,16 @@ win32_gl_create_window(HWND *wnd_out, DWORD style, RECT rect){
     if ( base_device_context ) {
         base_device_context->Release( );
         base_device_context = 0;
+    }
+    
+    if ( dxgi_device ) {
+        dxgi_device->Release( );
+        dxgi_device = 0;
+    }
+    
+    if ( dxgi_adapter ) {
+        dxgi_adapter->Release( );
+        dxgi_adapter = 0;
     }
     
     if ( dxgi_factory ) {

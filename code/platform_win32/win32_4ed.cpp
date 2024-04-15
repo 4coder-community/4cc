@@ -1745,7 +1745,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
         window_style |= WS_MAXIMIZE;
     }
     log_os(" windowed dimensions: %d, %d\n"
-           " initially maximized: %d",
+           " initially maximized: %d\n",
            window_rect.right - window_rect.left,
            window_rect.bottom - window_rect.top,
            ((window_style & WS_MAXIMIZE) != 0));

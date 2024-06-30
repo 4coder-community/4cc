@@ -26,5 +26,11 @@ Welcome to the 4coder community repository.
    1. `$ cd 4cc/code`
    2. `$ ./bin/build-linux.sh`
 
-## Mac (Untested)
-1. The steps should be the same as linux but replace the `*-linux.sh` with their `*-mac.sh` equivalents.
+## Mac 
+> tested on macOS Catalina 10.15.7, MacBook Pro 2013
+
+## Mac
+1. Get required libraries using macports or brew:
+    1. `sudo port install coreutils`
+    2. macports names the realpath command grealpath, so symbolic link for build-mac.sh: `sudo ln -s /opt/local/bin/grealpath /opt/local/bin/realpath`
+2. Follow steps from linux but replace the `*-linux.sh` with their `*-mac.sh` equivalents.

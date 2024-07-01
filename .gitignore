@@ -1,3 +1,4 @@
 build/
 current_dist*/
 distributions/
+.DS_Store

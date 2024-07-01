@@ -29,8 +29,15 @@ Welcome to the 4coder community repository.
 ## Mac 
 > tested on macOS Catalina 10.15.7, MacBook Pro 2013
 
-## Mac
 1. Get required libraries using macports or brew:
-    1. `sudo port install coreutils`
-    2. macports names the realpath command grealpath, so symbolic link for build-mac.sh: `sudo ln -s /opt/local/bin/grealpath /opt/local/bin/realpath`
-2. Follow steps from linux but replace the `*-linux.sh` with their `*-mac.sh` equivalents.
+  1. `$ sudo port install coreutils`
+  2. macports names the `realpath` command `grealpath`, so make a symbolic link in order to use build-mac.sh: 
+     `$ sudo ln -s /opt/local/bin/grealpath /opt/local/bin/realpath`
+
+2. Use the `package-mac.sh` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
+   1. `$ cd 4cc/code`
+   2. `$ ./bin/package-mac.sh`
+
+3. You can also use the `build-mac.sh` script if you want just build the binaries, (this produces the build artifacts in the `build` directory, this doesn't produce a functional distribution)
+   1. `$ cd 4cc/code`
+   2. `$ ./bin/build-mac.sh`

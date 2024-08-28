@@ -780,12 +780,12 @@ win32_keycode_init(void){
     keycode_lookup_table[VK_NUMPAD9] = KeyCode_NumPad9;
     
     for (i32 i = 0xDF; i < 0xFF; i += 1){
-        keycode_lookup_table[i] = KeyCode_Ex0 + 1;
+        keycode_lookup_table[i] = KeyCode_Ex0 + i - 0xDF;
     }
 }
 
 internal b32
-keycode_physical_translaion_is_wrong(u64 vk){
+keycode_physical_translation_is_wrong(u64 vk){
     b32 result = false;
     switch (vk){
         case VK_UP: case VK_DOWN: case VK_LEFT: case VK_RIGHT:
@@ -1157,7 +1157,7 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
             u64 vk = wParam;
             
             if (win32vars.key_mode == KeyMode_Physical &&
-                !keycode_physical_translaion_is_wrong(vk)){
+                !keycode_physical_translation_is_wrong(vk)){
                 UINT scan_code = ((lParam >> 16) & bitmask_8);
                 vk = MapVirtualKeyEx(scan_code, MAPVK_VSC_TO_VK_EX, win32vars.kl_universal);
             }

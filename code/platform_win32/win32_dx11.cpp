@@ -1,8 +1,4 @@
 
-#pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
-
 #include <initguid.h>
 #include <d3d11_1.h>
 #include <dxgi1_3.h>

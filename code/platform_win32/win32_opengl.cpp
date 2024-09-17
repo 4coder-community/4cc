@@ -1,6 +1,4 @@
 
-#pragma comment(lib, "OpenGL32.lib")
-
 #include "win32_gl.h"
 
 #include <GL/gl.h>
@@ -249,7 +247,7 @@ win32_gl_create_window(HWND *wnd_out, HGLRC *context_out, DWORD style, RECT rect
                 ReleaseDC(wnd, dc);
                 DestroyWindow(wnd);
                 SetLastError(error);
-            } 
+            }
         }
     }
     

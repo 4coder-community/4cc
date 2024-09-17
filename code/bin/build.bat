@@ -18,12 +18,26 @@ set custom_bin=%custom_root\bin
 cd %location%
 
 set mode=%1
-if "%mode%" == "" (set mode="/DDEV_BUILD")
+set backend=%1
+
+REM I don't know how to loop over parameters.
+if "%backend%" == "/DWIN32_OPENGL" (
+    set mode=%2
+) else if "%backend%" == "/DWIN32_DX11" (
+    set mode=%2
+) else (
+    set backend=%2
+    if "%backend%" == "" (
+        set backend=/DWIN32_OPENGL
+    )
+)
+
+if "%mode%" == "" (set mode=/DDEV_BUILD)
 
 set opts=/W4 /wd4310 /wd4100 /wd4201 /wd4505 /wd4996 /wd4127 /wd4510 /wd4512 /wd4610 /wd4390 /wd4189 /WX
 set opts=%opts% /GR- /EHa- /nologo /FC /Zi
 set opts=%opts% /I%src_root% /I%custom_root%
-set opts=%opts% %mode%
+set opts=%opts% %mode% %backend%
 
 set FirstError=0
 

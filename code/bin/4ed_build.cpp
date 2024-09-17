@@ -156,6 +156,8 @@ enum{
     SUPER = 0x40,
     INTERNAL = 0x80,
     SHIP = 0x100,
+    OPENGL = 0x200,
+    DX11 = 0x400,
 };
 
 internal char**
@@ -169,6 +171,11 @@ get_defines_from_flags(Arena *arena, u32 flags){
     }
     if (HasFlag(flags, SUPER)){
         result = fm_list(arena, fm_list_one_item(arena, "FRED_SUPER"), result);
+    }
+    if (HasFlag(flags, OPENGL)) {
+        result = fm_list(arena, fm_list_one_item(arena, "WIN32_OPENGL"), result);
+    } else if (HasFlag(flags, DX11)) {
+        result = fm_list(arena, fm_list_one_item(arena, "WIN32_DX11"), result);
     }
     return(result);
 }
@@ -186,8 +193,15 @@ get_defines_from_flags(Arena *arena, u32 flags){
 
 #define CL_LIBS_COMMON \
 "user32.lib winmm.lib gdi32.lib comdlg32.lib userenv.lib "
-#define CL_LIBS_X64 CL_LIBS_COMMON FOREIGN_WIN "\\x64\\freetype.lib"
-#define CL_LIBS_X86 CL_LIBS_COMMON FOREIGN_WIN "\\x86\\freetype.lib"
+
+#if defined( WIN32_DX11 )
+#define CL_LIBS_BACKEND " d3d11.lib dxgi.lib d3dcompiler.lib"
+#else
+#define CL_LIBS_BACKEND " OpenGL32.lib"
+#endif
+
+#define CL_LIBS_X64 CL_LIBS_COMMON FOREIGN_WIN "\\x64\\freetype.lib" CL_LIBS_BACKEND
+#define CL_LIBS_X86 CL_LIBS_COMMON FOREIGN_WIN "\\x86\\freetype.lib" CL_LIBS_BACKEND
 
 #define CL_ICON "..\\non-source\\res\\icon.res"
 
@@ -399,15 +413,15 @@ build(Arena *arena, u32 flags, u32 arch, char *code_path, char **code_files, cha
 "-Wno-missing-declarations -Wno-nullability-completeness " \
 "-std=c++11 "
 
-#define CLANG_LIBS_COMMON \
+# define CLANG_LIBS_COMMON \
 "-framework Cocoa -framework QuartzCore " \
 "-framework CoreServices " \
 "-framework OpenGL -framework IOKit -framework Metal -framework MetalKit "
 
-#define CLANG_LIBS_X64 CLANG_LIBS_COMMON \
+# define CLANG_LIBS_X64 CLANG_LIBS_COMMON \
 FOREIGN "/x64/libfreetype-mac.a"
 
-#define CLANG_LIBS_X86 CLANG_LIBS_COMMON \
+# define CLANG_LIBS_X86 CLANG_LIBS_COMMON \
 FOREIGN "/x86/libfreetype-mac.a"
 
 #else
@@ -665,6 +679,14 @@ package(Arena *arena, char *cdir, Tier_Code tier, Arch_Code arch){
     
     u32 base_flags = SHIP | DEBUG_INFO | OPTIMIZATION;
     
+#if OS_WINDOWS
+#if defined( WIN32_DX11 )
+    base_flags |= DX11;
+#else
+    base_flags |= OPENGL;
+#endif
+#endif
+    
     fm_make_folder_if_missing(arena, pack_dir);
     
     char *tier_name = tier_names[tier];
@@ -689,6 +711,13 @@ int main(int argc, char **argv){
 #endif
 #if defined(OPT_BUILD) || defined(OPT_BUILD_X86)
     flags |= OPTIMIZATION;
+#endif
+#if OS_WINDOWS
+#if defined(WIN32_DX11)
+    flags |= DX11;
+#else
+    flags |= OPENGL;
+#endif
 #endif
 #if defined(DEV_BUILD_X86) || defined(OPT_BUILD_X86)
     arch = Arch_X86;

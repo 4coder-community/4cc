@@ -14,8 +14,8 @@ Welcome to the 4coder community repository.
    2. `$ .\bin\build.bat`
 
 In addition to the parametr listed below, you can specify which backend to use by passing one of those parameters:
-- /DWIN32_OPENGL (default) to use the OpenGL backend.
-- /DWIN32_DX11 to use the Direct3D 11 backend.
+- `/DWIN32_OPENGL` (default) to use the OpenGL backend.
+- `/DWIN32_DX11` to use the Direct3D 11 backend.
 
 ## Linux
 > tested on Ubuntu 22.04:

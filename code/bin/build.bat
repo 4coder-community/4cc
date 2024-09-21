@@ -20,18 +20,15 @@ cd %location%
 set mode=%1
 set backend=%1
 
-REM I don't know how to loop over parameters.
-if "%backend%" == "/DWIN32_OPENGL" (
+if "%1%" == "/DWIN32_OPENGL" (
     set mode=%2
-) else if "%backend%" == "/DWIN32_DX11" (
+) else if "%1%" == "/DWIN32_DX11" (
     set mode=%2
 ) else (
     set backend=%2
-    if "%backend%" == "" (
-        set backend=/DWIN32_OPENGL
-    )
 )
 
+if "%backend%" == "" (set backend=/DWIN32_OPENGL)
 if "%mode%" == "" (set mode=/DDEV_BUILD)
 
 set opts=/W4 /wd4310 /wd4100 /wd4201 /wd4505 /wd4996 /wd4127 /wd4510 /wd4512 /wd4610 /wd4390 /wd4189 /WX

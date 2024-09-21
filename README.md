@@ -38,15 +38,15 @@ In addition to the parameter listed below, you can specify which backend to use 
 The build script accepts a parameter (mutually exclusive):
 - `/DDEV_BUILD` or `/DDEV_BUILD_X86` (default value) : build without optimizations.
    Produces debug symbols.
-   Defines: `FRED_INTERNAL`, `FRED_SUPER` macros.
+   Defines: `FRED_INTERNAL`, `FRED_SUPER`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
 - `/DOPT_BUILD` or `/DOPT_BUILD_X86` (similar to `build_optimized` script): build with optimizations.
    Doesn't produce debug symbols.
    Defines `FRED_SUPER` macro.
 - `/DPACKAGE_SUPER_X64` or `/DPACKAGE_SUPER_X86` (similar to `package` script): package 4coder for distribution.
    Turns on optimizations.
    Produces debug symbols.
-   Defines `SHIP_MODE`, `FRED_SUPER` macros.
+   Defines `SHIP_MODE`, `FRED_SUPER`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
 - `/DPACKAGE_DEMO_X64` or `/DPACKAGE_DEMO_X86`: packages 4coder demo for distribution.
    Turns on optimizations.
    Produces debug symbols.
-   Defines `SHIP_MODE` macro.
+   Defines `SHIP_MODE`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.

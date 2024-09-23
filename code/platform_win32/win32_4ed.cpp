@@ -447,7 +447,7 @@ win32_post_clipboard(Arena *scratch, char *text, i32 len){
             SetClipboardData(CF_TEXT, memory_handle);
         }
         CloseClipboard();
-		win32vars.clipboard_sequence = GetClipboardSequenceNumber();
+        win32vars.clipboard_sequence = GetClipboardSequenceNumber();
     }
 }
 
@@ -456,10 +456,10 @@ system_get_clipboard_sig(){
     String_Const_u8 result = {};
     DWORD new_number = GetClipboardSequenceNumber();
     if (new_number != win32vars.clipboard_sequence){
-		result = win32_read_clipboard_contents(win32vars.tctx, arena);
-		if (result.str != 0){
-			win32vars.clipboard_sequence = new_number;
-		}
+        result = win32_read_clipboard_contents(win32vars.tctx, arena);
+        if (result.str != 0){
+            win32vars.clipboard_sequence = new_number;
+        }
     }
     return(result);
 }
@@ -898,10 +898,10 @@ internal void
 date_time_from_win32_system_time(Date_Time *out, SYSTEMTIME *in){
     out->year = in->wYear;
     out->mon = (u8)(in->wMonth - 1);
-	out->day = (u8)(in->wDay - 1);
-	out->hour = (u8)(in->wHour);
-	out->min = (u8)(in->wMinute);
-	out->sec = (u8)(in->wSecond);
+    out->day = (u8)(in->wDay - 1);
+    out->hour = (u8)(in->wHour);
+    out->min = (u8)(in->wMinute);
+    out->sec = (u8)(in->wSecond);
     out->msec = in->wMilliseconds;
 }
 
@@ -1188,7 +1188,7 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
                     }
                 }break;
             }
-			
+            
             b8 ctrl = (controls->r_ctrl || (controls->l_ctrl && !controls->r_alt));
             b8 alt = (controls->l_alt || (controls->r_alt && !controls->l_ctrl));
             if (win32vars.lctrl_lalt_is_altgr && controls->l_alt && controls->l_ctrl){
@@ -2025,7 +2025,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
             
             // NOTE(allen): while we're doing this (and possibly sleeping)
             // we can let async processes get there time in.
-			system_release_global_frame_mutex(win32vars.tctx);
+            system_release_global_frame_mutex(win32vars.tctx);
             
             b32 get_more_messages = true;
             do{
@@ -2103,7 +2103,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
                 }
             }while (get_more_messages);
             
-			system_acquire_global_frame_mutex(win32vars.tctx);
+            system_acquire_global_frame_mutex(win32vars.tctx);
         }
         
         // NOTE(allen): Mouse Out of Window Detection
@@ -2228,7 +2228,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
         }
         
         // NOTE(allen): sleep a bit to cool off :)
-		system_release_global_frame_mutex(win32vars.tctx);
+        system_release_global_frame_mutex(win32vars.tctx);
         
         u64 timer_end = system_now_time();
         u64 end_target = timer_start + frame_useconds;

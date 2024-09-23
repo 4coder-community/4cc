@@ -448,6 +448,7 @@ win32_post_clipboard(Arena *scratch, char *text, i32 len){
             SetClipboardData(CF_TEXT, memory_handle);
         }
         CloseClipboard();
+        win32vars.clipboard_sequence = GetClipboardSequenceNumber();
     }
 }
 
@@ -456,13 +457,9 @@ system_get_clipboard_sig(){
     String_Const_u8 result = {};
     DWORD new_number = GetClipboardSequenceNumber();
     if (new_number != win32vars.clipboard_sequence){
-        win32vars.clipboard_sequence = new_number;
-        
-        for (i32 R = 0; R < 8; ++R){
-            result = win32_read_clipboard_contents(win32vars.tctx, arena);
-            if (result.str == 0){
-                break;
-            }
+        result = win32_read_clipboard_contents(win32vars.tctx, arena);
+        if (result.str != 0){
+            win32vars.clipboard_sequence = new_number;
         }
     }
     return(result);

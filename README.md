@@ -13,6 +13,10 @@ Welcome to the 4coder community repository.
    1. `$ cd 4cc\code`
    2. `$ .\bin\build.bat`
 
+In addition to the parameter listed below, you can specify which backend to use by passing one of those parameters to the build scripts:
+- `/DWIN32_OPENGL` (default) to use the OpenGL backend.
+- `/DWIN32_DX11` to use the Direct3D 11 backend.
+
 ## Linux
 > tested on Ubuntu 22.04:
 
@@ -28,3 +32,21 @@ Welcome to the 4coder community repository.
 
 ## Mac (Untested)
 1. The steps should be the same as linux but replace the `*-linux.sh` with their `*-mac.sh` equivalents.
+
+## Build script prameter
+
+The build script accepts a parameter (mutually exclusive):
+- `/DDEV_BUILD` or `/DDEV_BUILD_X86` (default value) : build without optimizations.
+   Produces debug symbols.
+   Defines: `FRED_INTERNAL`, `FRED_SUPER`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
+- `/DOPT_BUILD` or `/DOPT_BUILD_X86` (similar to `build_optimized` script): build with optimizations.
+   Doesn't produce debug symbols.
+   Defines `FRED_SUPER` macro.
+- `/DPACKAGE_SUPER_X64` or `/DPACKAGE_SUPER_X86` (similar to `package` script): package 4coder for distribution.
+   Turns on optimizations.
+   Produces debug symbols.
+   Defines `SHIP_MODE`, `FRED_SUPER`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
+- `/DPACKAGE_DEMO_X64` or `/DPACKAGE_DEMO_X86`: packages 4coder demo for distribution.
+   Turns on optimizations.
+   Produces debug symbols.
+   Defines `SHIP_MODE`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.

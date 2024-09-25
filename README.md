@@ -42,15 +42,13 @@ In addition to the parameter listed below, you can specify which backend to use 
    1. `$ cd 4cc/code`
    2. `$ ./bin/build-mac.sh`
 
----
+### Older Macs, 10.15.7 Catalina
 
 If you are using an older version of mac, such as 10.15.7 Catalina you need to install the realpath command:
 
 1. `$ sudo port install coreutils`
 2. macports names the `realpath` command `grealpath`, so make a symbolic link in order to use build-mac.sh:  
    `$ sudo ln -s /opt/local/bin/grealpath /opt/local/bin/realpath`
-
----
 
 ## Build script parameter
 

@@ -52,7 +52,7 @@ If you are using an older version of mac, such as 10.15.7 Catalina you need to i
 
 ---
 
-## Build script prameter
+## Build script parameter
 
 The build script accepts a parameter (mutually exclusive):
 - `/DDEV_BUILD` or `/DDEV_BUILD_X86` (default value) : build without optimizations.

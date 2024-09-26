@@ -132,40 +132,30 @@ end_render_section(Render_Target *target){
 
 internal void
 draw_rectangle_outline(Render_Target *target, Rect_f32 rect, f32 roundness, f32 thickness, u32 color){
-    if (roundness < epsilon_f32){
-        roundness = 0.f;
-    }
-    thickness = clamp_bot(1.f, thickness);
-    f32 half_thickness = thickness*0.5f;
     
-    Render_Vertex vertices[6] = {};
-    vertices[0].xy = V2f32(rect.x0, rect.y0);
-    vertices[1].xy = V2f32(rect.x1, rect.y0);
-    vertices[2].xy = V2f32(rect.x0, rect.y1);
-    vertices[3].xy = V2f32(rect.x1, rect.y0);
-    vertices[4].xy = V2f32(rect.x0, rect.y1);
-    vertices[5].xy = V2f32(rect.x1, rect.y1);
-    
-    Vec2_f32 center = rect_center(rect);
-    for (i32 i = 0; i < ArrayCount(vertices); i += 1){
-        vertices[i].uvw = V3f32(center.x, center.y, roundness);
-        vertices[i].color = color;
-        vertices[i].half_thickness = half_thickness;
-    }
-    
-    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
-    // It would be better to use the current clip rect, but it's not available here. We could pass
-    // it down in the function signature if necessary.
-    // This is not in the loop to try minimize the impact it could have on performance when there
-    // are a lot of vertex (we don't test duplicated vertex positions).
-    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
-    b32 draw = false;
-    draw = draw || rect_contains_point( target_rect, vertices[ 0 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 1 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 2 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 5 ].xy );
-    
-    if ( draw ) {
+    if ( rect_overlap(rect, target->current_clip_box) ) {
+            
+        if (roundness < epsilon_f32){
+            roundness = 0.f;
+        }
+        thickness = clamp_bot(1.f, thickness);
+        f32 half_thickness = thickness*0.5f;
+        
+        Render_Vertex vertices[6] = {};
+        vertices[0].xy = V2f32(rect.x0, rect.y0);
+        vertices[1].xy = V2f32(rect.x1, rect.y0);
+        vertices[2].xy = V2f32(rect.x0, rect.y1);
+        vertices[3].xy = V2f32(rect.x1, rect.y0);
+        vertices[4].xy = V2f32(rect.x0, rect.y1);
+        vertices[5].xy = V2f32(rect.x1, rect.y1);
+        
+        Vec2_f32 center = rect_center(rect);
+        for (i32 i = 0; i < ArrayCount(vertices); i += 1){
+            vertices[i].uvw = V3f32(center.x, center.y, roundness);
+            vertices[i].color = color;
+            vertices[i].half_thickness = half_thickness;
+        }
+        
         draw__write_vertices_in_current_group(target, vertices, ArrayCount(vertices));
     }
 }
@@ -209,65 +199,60 @@ draw_font_glyph(Render_Target *target, Face *face, u32 codepoint, Vec2_f32 p,
     vertices[2].xy = p_x_min + y_max;
     vertices[5].xy = p_x_max + y_max;
     
-#if 0    
-    Vec2_f32 xy_min = p + bounds.xy_off.x0*x_axis + bounds.xy_off.y0*y_axis;
-    Vec2_f32 xy_max = p + bounds.xy_off.x1*x_axis + bounds.xy_off.y1*y_axis;
-    
-    vertices[0].xy = V2f32(xy_min.x, xy_min.y);
-    vertices[1].xy = V2f32(xy_max.x, xy_min.y);
-    vertices[2].xy = V2f32(xy_min.x, xy_max.y);
-    vertices[5].xy = V2f32(xy_max.x, xy_max.y);
-#endif
-    
-#if 0    
-    if (!HasFlag(flags, GlyphFlag_Rotate90)){
-        Rect_f32 xy = Rf32(p + bounds.xy_off.p0, p + bounds.xy_off.p1);
-        
-        vertices[0].xy  = V2f32(xy.x0, xy.y1);
-        vertices[0].uvw = V3f32(uv.x0, uv.y1, bounds.w);
-        vertices[1].xy  = V2f32(xy.x1, xy.y1);
-        vertices[1].uvw = V3f32(uv.x1, uv.y1, bounds.w);
-        vertices[2].xy  = V2f32(xy.x0, xy.y0);
-        vertices[2].uvw = V3f32(uv.x0, uv.y0, bounds.w);
-        vertices[5].xy  = V2f32(xy.x1, xy.y0);
-        vertices[5].uvw = V3f32(uv.x1, uv.y0, bounds.w);
-    }
-    else{
-        Rect_f32 xy = Rf32(p.x - bounds.xy_off.y1, p.y + bounds.xy_off.x0,
-                           p.x - bounds.xy_off.y0, p.y + bounds.xy_off.x1);
-        
-        vertices[0].xy  = V2f32(xy.x0, xy.y1);
-        vertices[0].uvw = V3f32(uv.x1, uv.y1, bounds.w);
-        vertices[1].xy  = V2f32(xy.x1, xy.y1);
-        vertices[1].uvw = V3f32(uv.x1, uv.y0, bounds.w);
-        vertices[2].xy  = V2f32(xy.x0, xy.y0);
-        vertices[2].uvw = V3f32(uv.x0, uv.y1, bounds.w);
-        vertices[5].xy  = V2f32(xy.x1, xy.y0);
-        vertices[5].uvw = V3f32(uv.x0, uv.y0, bounds.w);
-    }
-#endif
-    
-    vertices[3] = vertices[1];
-    vertices[4] = vertices[2];
-    
-    for (i32 i = 0; i < ArrayCount(vertices); i += 1){
-        vertices[i].color = color;
-        vertices[i].half_thickness = 0.f;
-    }
-    
-    // NOTE simon (03/04/24): If any vertex is in the render target bounds, we draw the rectangle.
-    // It would be better to use the current clip rect, but it's not available here. We could pass
-    // it down in the function signature if necessary.
-    // This is not in the loop to try minimize the impact it could have on performance when there
-    // are a lot of vertex (we don't test duplicated vertex positions).
-    Rect_f32 target_rect = Rf32( 0, 0, ( f32 ) target->width, ( f32 ) target->height );
-    b32 draw = false;
-    draw = draw || rect_contains_point( target_rect, vertices[ 0 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 1 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 2 ].xy );
-    draw = draw || rect_contains_point( target_rect, vertices[ 5 ].xy );
+    /* NOTE simon (26/09/24): We don't use rect_overlap here because the text rect is not guaranteed to be axis aligned. */
+    b32 draw = rect_contains_point( target->current_clip_box, vertices[ 0 ].xy );
+    draw  = draw || rect_contains_point( target->current_clip_box, vertices[ 1 ].xy );
+    draw  = draw || rect_contains_point( target->current_clip_box, vertices[ 2 ].xy );
+    draw  = draw || rect_contains_point( target->current_clip_box, vertices[ 5 ].xy );
     
     if ( draw ) {
+    
+#if 0    
+        Vec2_f32 xy_min = p + bounds.xy_off.x0*x_axis + bounds.xy_off.y0*y_axis;
+        Vec2_f32 xy_max = p + bounds.xy_off.x1*x_axis + bounds.xy_off.y1*y_axis;
+        
+        vertices[0].xy = V2f32(xy_min.x, xy_min.y);
+        vertices[1].xy = V2f32(xy_max.x, xy_min.y);
+        vertices[2].xy = V2f32(xy_min.x, xy_max.y);
+        vertices[5].xy = V2f32(xy_max.x, xy_max.y);
+#endif
+        
+#if 0    
+        if (!HasFlag(flags, GlyphFlag_Rotate90)){
+            Rect_f32 xy = Rf32(p + bounds.xy_off.p0, p + bounds.xy_off.p1);
+            
+            vertices[0].xy  = V2f32(xy.x0, xy.y1);
+            vertices[0].uvw = V3f32(uv.x0, uv.y1, bounds.w);
+            vertices[1].xy  = V2f32(xy.x1, xy.y1);
+            vertices[1].uvw = V3f32(uv.x1, uv.y1, bounds.w);
+            vertices[2].xy  = V2f32(xy.x0, xy.y0);
+            vertices[2].uvw = V3f32(uv.x0, uv.y0, bounds.w);
+            vertices[5].xy  = V2f32(xy.x1, xy.y0);
+            vertices[5].uvw = V3f32(uv.x1, uv.y0, bounds.w);
+        }
+        else{
+            Rect_f32 xy = Rf32(p.x - bounds.xy_off.y1, p.y + bounds.xy_off.x0,
+                               p.x - bounds.xy_off.y0, p.y + bounds.xy_off.x1);
+            
+            vertices[0].xy  = V2f32(xy.x0, xy.y1);
+            vertices[0].uvw = V3f32(uv.x1, uv.y1, bounds.w);
+            vertices[1].xy  = V2f32(xy.x1, xy.y1);
+            vertices[1].uvw = V3f32(uv.x1, uv.y0, bounds.w);
+            vertices[2].xy  = V2f32(xy.x0, xy.y0);
+            vertices[2].uvw = V3f32(uv.x0, uv.y1, bounds.w);
+            vertices[5].xy  = V2f32(xy.x1, xy.y0);
+            vertices[5].uvw = V3f32(uv.x0, uv.y0, bounds.w);
+        }
+#endif
+        
+        vertices[3] = vertices[1];
+        vertices[4] = vertices[2];
+        
+        for (i32 i = 0; i < ArrayCount(vertices); i += 1){
+            vertices[i].color = color;
+            vertices[i].half_thickness = 0.f;
+        }
+        
         draw__write_vertices_in_current_group(target, vertices, ArrayCount(vertices));
     }
 }

@@ -777,8 +777,8 @@ win32_keycode_init(void){
     keycode_lookup_table[VK_NUMPAD8] = KeyCode_NumPad8;
     keycode_lookup_table[VK_NUMPAD9] = KeyCode_NumPad9;
     
-    for (i32 i = 0xDF; i < 0xFF; i += 1){
-        keycode_lookup_table[i] = KeyCode_Ex0 + i - 0xDF;
+    for (i32 i = 0; i < 30; i += 1){
+        keycode_lookup_table[0xDF + i] = KeyCode_Ex0 + i;
     }
 }
 

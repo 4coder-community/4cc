@@ -368,6 +368,9 @@ edit_change_current_history_state(Thread_Context *tctx, Models *models, Editing_
         }
         
         file->state.current_record_index = current;
+        if (file->state.saved_record_index == current){
+            RemFlag(file->state.dirty, DirtyState_UnsavedChanges);
+        }
     }
 }
 

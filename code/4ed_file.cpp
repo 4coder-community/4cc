@@ -157,6 +157,7 @@ save_file_to_name(Thread_Context *tctx, Models *models, Editing_File *file, u8 *
         File_Attributes new_attributes = system_save_file(scratch, (char*)file_name, saveable_string);
         if (new_attributes.last_write_time > 0 &&
             using_actual_file_name){
+            file->state.saved_record_index = file->state.current_record_index;
             file->state.save_state = FileSaveState_SavedWaitingForNotification;
             file_clear_dirty_flags(file);
         }

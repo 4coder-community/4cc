@@ -37,9 +37,49 @@ main(int argc, char **argv){
         exit(1);
     }
     
+    String_Const_u8 exe = SCu8("4ed_api_parser_main.exe");
+    u32 command_line_length = exe.size + 1;
+    String_Const_u8 command_line = { 0 };
+    
+    for (i32 i = 1; i < argc; i+=1){
+        command_line_length += cstring_length(argv[i]) + 1;
+    }
+    
+    command_line = push_data(&arena, command_line_length);
+    u8* command_line_current = command_line.str;
+    u8* command_line_end = command_line.str + command_line.size;
+    
+    {
+        char* c = ( char* ) exe.str;
+        
+        while ( *c != 0 && command_line_current < command_line_end ) {
+            *command_line_current = *c;
+            command_line_current++;
+            c++;
+        }
+    }
+    
+    if ( command_line_current < command_line_end ) {
+        *command_line_current = ' ';
+        command_line_current++;
+    }
+    
     API_Definition_List list = {};
     for (i32 i = 1; i < argc; i += 1){
         char *file_name = argv[i];
+        
+        char* c = file_name;
+        while ( *c != 0 && command_line_current < command_line_end ) {
+            *command_line_current = *c;
+            command_line_current++;
+            c++;
+        }
+        
+        if ( command_line_current < command_line_end ) {
+            *command_line_current = ' ';
+            command_line_current++;
+        }
+        
         FILE *file = fopen(file_name, "rb");
         if (file == 0){
             printf("error: could not open input file: '%s'\n", argv[i]);
@@ -57,7 +97,7 @@ main(int argc, char **argv){
     for (API_Definition *node = list.first;
          node != 0;
          node = node->next){
-        api_definition_generate_api_includes(&arena, node, GeneratedGroup_Custom, APIGeneration_NoAPINameOnCallables);
+        api_definition_generate_api_includes(&arena, node, GeneratedGroup_Custom, APIGeneration_NoAPINameOnCallables, command_line);
     }
 }
 

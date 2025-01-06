@@ -54,6 +54,11 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 di
 }
 
 internal void
+gl__free_texture(u32 texture){
+    glDeleteTextures(1, &texture);
+}
+
+internal void
 gl__error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char *message, const void *userParam){
     switch (id){
         case 131218:
@@ -107,20 +112,20 @@ char *gl__fragment = R"foo(
         smooth in float half_thickness;
         uniform sampler2DArray sampler;
         out vec4 out_color;
-        
+
         float rectangle_sd(vec2 p, vec2 b){
         vec2 d = abs(p) - b;
         return(length(max(d, vec2(0.0, 0.0))) + min(max(d.x, d.y), 0.0));
         }
-        
+
         void main(void)
         {
         float has_thickness = (step(0.49, half_thickness));
         float does_not_have_thickness = 1.0 - has_thickness;
-        
+
         float sample_value = texture(sampler, uvw).r;
         sample_value *= does_not_have_thickness;
-        
+
         vec2 center = uvw.xy;
         float roundness = uvw.z;
         float sd = rectangle_sd(xy - center, adjusted_half_dim);
@@ -128,7 +133,7 @@ char *gl__fragment = R"foo(
         sd = abs(sd + half_thickness) - half_thickness;
         float shape_value = 1.0 - smoothstep(-1.0, 0.0, sd);
         shape_value *= has_thickness;
-        
+
         out_color = vec4(fragment_color.xyz, fragment_color.a*(sample_value + shape_value));
         }
         )foo";

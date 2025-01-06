@@ -67,3 +67,18 @@ The build script accepts a parameter (mutually exclusive):
    Turns on optimizations.
    Produces debug symbols.
    Defines `SHIP_MODE`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
+   
+## API generators
+
+4coder uses several small programs to generate some headers and source files. Those do not run automatically, you must build them and run them when needed (which shouldn't really happen).
+
+- `code\4ed_font_api.cpp` creates, in `code\generated`, `font_api.h`, `font_api.cpp`, `font_api_constructor.cpp` (not used) and `font_api_master_list.h` (not used);
+- `code\4ed_graphics_api.cpp` creates, in `code\generated`, `graphics_api.h` and `graphics_api.cpp`, `graphics_api_constructor.cpp` (not used) and `graphics_api_master_list.h` (not used);
+- `code\4ed_system_api.cpp` creates, in `code\custom\generated`, `system_api.h`, `system_api.cpp`, `system_api_constructor.cpp`, `system_api_master_list.h`;
+- `code\4ed_api_parser_main.cpp` is a little different, as it parses source files passed as parameters to search for functions and type preceded by `api(some_api_name)` and creates 4 files in the `code\custom\generated`. It is used to generate `custom_api.h`, `custom_api.cpp`, `custom_api_constructor.cpp` and `custom_api_master_list.h` by passing `code\4ed_api_implementation.cpp` as a parameter.
+
+You need to compile one of those file and run it from the `code` directory.
+
+There is also `code\4ed_api_check.cpp` to verify the generated file but it's not clear at the moment what to check against.
+
+- `code\4ed_generate_keycodes.cpp` is also a bit appart as it generates `code\custom\generated\4coder_event_codes.h` which are keyboard key codes and some event hook ids.

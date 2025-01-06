@@ -174,7 +174,7 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
     if (error == 0){
         face = push_array_zero(arena, Face, 1);
         
-        u32 pt_size_unscaled = Max(description->parameters.pt_size, 8); 
+        u32 pt_size_unscaled = Max(description->parameters.pt_size, 8);
         u32 pt_size = (u32)(pt_size_unscaled*scale_factor);
         b32 hinting = description->parameters.hinting;
         
@@ -306,59 +306,69 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
         
         Texture_Kind texture_kind = TextureKind_Mono;
         u32 texture = graphics_get_texture(pack.dim, texture_kind);
-        face->texture_kind = texture_kind;
-        face->texture = texture;
         
-        Vec3_f32 texture_dim = V3f32(pack.dim);
-        face->texture_dim = texture_dim;
-        
-        {
-            Vec3_i32 p = V3i32((i32)face->white.uv.x0, (i32)face->white.uv.y0, (i32)face->white.w);
-            Vec3_i32 dim = V3i32(white.dim.x, white.dim.y, 1);
-            graphics_fill_texture(texture_kind, texture, p, dim, white.data);
-            face->white.uv.x1 = (face->white.uv.x0 + face->white.uv.x1)/texture_dim.x;
-            face->white.uv.y1 = (face->white.uv.y0 + face->white.uv.y1)/texture_dim.y;
-            face->white.uv.x0 =  face->white.uv.x0/texture_dim.x;
-            face->white.uv.y0 =  face->white.uv.y0/texture_dim.y;
-            face->white.w /= texture_dim.z;
-        }
-        
-        for (u16 i = 0; i < index_count; i += 1){
-            Vec3_i32 p = V3i32((i32)face->bounds[i].uv.x0, (i32)face->bounds[i].uv.y0, (i32)face->bounds[i].w);
-            Vec3_i32 dim = V3i32(glyph_bitmaps[i].dim.x, glyph_bitmaps[i].dim.y, 1);
-            graphics_fill_texture(texture_kind, texture, p, dim, glyph_bitmaps[i].data);
-            face->bounds[i].uv.x1 = (face->bounds[i].uv.x0 + face->bounds[i].uv.x1)/texture_dim.x;
-            face->bounds[i].uv.y1 = (face->bounds[i].uv.y0 + face->bounds[i].uv.y1)/texture_dim.y;
-            face->bounds[i].uv.x0 =  face->bounds[i].uv.x0/texture_dim.x;
-            face->bounds[i].uv.y0 =  face->bounds[i].uv.y0/texture_dim.y;
-            face->bounds[i].w /= texture_dim.z;
-        }
-        
-        {
-            Face_Advance_Map *advance_map = &face->advance_map;
+        /* NOTE simon (06/01/25): This assumes that every platforms don't use 0 as a valid texture id.
+        This is valid for OpenGL and the DX11 implementaion. Someone needs to check the MAC versions. */
+        if (texture != 0 ){
             
-            met->space_advance = font_get_glyph_advance(advance_map, met, ' ', 0);
-            met->decimal_digit_advance =
-                font_get_max_glyph_advance_range(advance_map, met, '0', '9', 0);
-            met->hex_digit_advance =
-                font_get_max_glyph_advance_range(advance_map, met, 'A', 'F', 0);
-            met->hex_digit_advance =
-                Max(met->hex_digit_advance, met->decimal_digit_advance);
-            met->byte_sub_advances[0] =
-                font_get_glyph_advance(advance_map, met, '\\', 0);
-            met->byte_sub_advances[1] = met->hex_digit_advance;
-            met->byte_sub_advances[2] = met->hex_digit_advance;
-            met->byte_advance =
-                met->byte_sub_advances[0] +
-                met->byte_sub_advances[1] +
-                met->byte_sub_advances[2];
-            met->normal_lowercase_advance =
-                font_get_average_glyph_advance_range(advance_map, met, 'a', 'z', 0);
-            met->normal_uppercase_advance =
-                font_get_average_glyph_advance_range(advance_map, met, 'A', 'Z', 0);
-            met->normal_advance = (26*met->normal_lowercase_advance +
-                                   26*met->normal_uppercase_advance +
-                                   10*met->decimal_digit_advance)/62.f;
+            face->texture_kind = texture_kind;
+            face->texture = texture;
+            
+            Vec3_f32 texture_dim = V3f32(pack.dim);
+            face->texture_dim = texture_dim;
+            
+            {
+                Vec3_i32 p = V3i32((i32)face->white.uv.x0, (i32)face->white.uv.y0, (i32)face->white.w);
+                Vec3_i32 dim = V3i32(white.dim.x, white.dim.y, 1);
+                graphics_fill_texture(texture_kind, texture, p, dim, white.data);
+                face->white.uv.x1 = (face->white.uv.x0 + face->white.uv.x1)/texture_dim.x;
+                face->white.uv.y1 = (face->white.uv.y0 + face->white.uv.y1)/texture_dim.y;
+                face->white.uv.x0 =  face->white.uv.x0/texture_dim.x;
+                face->white.uv.y0 =  face->white.uv.y0/texture_dim.y;
+                face->white.w /= texture_dim.z;
+            }
+            
+            for (u16 i = 0; i < index_count; i += 1){
+                Vec3_i32 p = V3i32((i32)face->bounds[i].uv.x0, (i32)face->bounds[i].uv.y0, (i32)face->bounds[i].w);
+                Vec3_i32 dim = V3i32(glyph_bitmaps[i].dim.x, glyph_bitmaps[i].dim.y, 1);
+                graphics_fill_texture(texture_kind, texture, p, dim, glyph_bitmaps[i].data);
+                face->bounds[i].uv.x1 = (face->bounds[i].uv.x0 + face->bounds[i].uv.x1)/texture_dim.x;
+                face->bounds[i].uv.y1 = (face->bounds[i].uv.y0 + face->bounds[i].uv.y1)/texture_dim.y;
+                face->bounds[i].uv.x0 =  face->bounds[i].uv.x0/texture_dim.x;
+                face->bounds[i].uv.y0 =  face->bounds[i].uv.y0/texture_dim.y;
+                face->bounds[i].w /= texture_dim.z;
+            }
+            
+            {
+                Face_Advance_Map *advance_map = &face->advance_map;
+                
+                met->space_advance = font_get_glyph_advance(advance_map, met, ' ', 0);
+                met->decimal_digit_advance =
+                    font_get_max_glyph_advance_range(advance_map, met, '0', '9', 0);
+                met->hex_digit_advance =
+                    font_get_max_glyph_advance_range(advance_map, met, 'A', 'F', 0);
+                met->hex_digit_advance =
+                    Max(met->hex_digit_advance, met->decimal_digit_advance);
+                met->byte_sub_advances[0] =
+                    font_get_glyph_advance(advance_map, met, '\\', 0);
+                met->byte_sub_advances[1] = met->hex_digit_advance;
+                met->byte_sub_advances[2] = met->hex_digit_advance;
+                met->byte_advance =
+                    met->byte_sub_advances[0] +
+                    met->byte_sub_advances[1] +
+                    met->byte_sub_advances[2];
+                met->normal_lowercase_advance =
+                    font_get_average_glyph_advance_range(advance_map, met, 'a', 'z', 0);
+                met->normal_uppercase_advance =
+                    font_get_average_glyph_advance_range(advance_map, met, 'A', 'Z', 0);
+                met->normal_advance = (26*met->normal_lowercase_advance +
+                                       26*met->normal_uppercase_advance +
+                                       10*met->decimal_digit_advance)/62.f;
+            }
+            
+        } else {
+            pop_array(arena, Face, 1);
+            face = 0;
         }
     }
     

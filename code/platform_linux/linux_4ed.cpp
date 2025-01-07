@@ -590,7 +590,7 @@ graphics_fill_texture_sig(){
 
 internal
 graphics_free_texture_sig(){
-	gl__free_texture(texid);
+    gl__free_texture(texid);
 }
 
 ////////////////////////////

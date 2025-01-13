@@ -321,7 +321,7 @@ default_render_buffer(Application_Links *app, View_ID view_id, Face_ID face_id,
         paint_text_color_fcolor(app, text_layout_id, visible_range, fcolor_id(defcolor_text_default));
     }
     
-    i64 cursor_pos = view_correct_cursor(app, view_id);
+    i64 cursor_pos = view_get_cursor_pos(app, view_id);
     view_correct_mark(app, view_id);
     
     // NOTE(allen): Scope highlight

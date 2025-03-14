@@ -280,6 +280,31 @@ CUSTOM_DOC("Reads the scroll wheel value from the mouse state and scrolls accord
     }
 }
 
+CUSTOM_COMMAND_SIG(mouse_wheel_scroll_over_hovered_view)
+CUSTOM_DOC("Reads the scroll wheel value from the mouse state and scrolls the view currently under the mouse accordingly.")
+{
+    Mouse_State mouse = get_mouse_state(app);
+    View_ID active_view = get_active_view(app, Access_ReadVisible);
+    if (mouse.wheel.y != 0.f || mouse.wheel.x != 0.f){
+        for(View_ID view = get_view_next(app, 0, Access_ReadVisible);
+            view != 0;
+            view = get_view_next(app, view, Access_ReadVisible)) {
+            Rect_f32 view_rect = view_get_screen_rect(app, view);
+            if(rect_contains_point(view_rect, V2f32(mouse.p)))
+            {
+                Buffer_Scroll scroll = view_get_buffer_scroll(app, view);
+                scroll.target = view_move_buffer_point(app, view, scroll.target, mouse.wheel);
+                view_set_buffer_scroll(app, view, scroll, SetBufferScroll_NoCursorChange);
+                active_view = view;
+                break;
+            }
+        }
+    }
+    if (mouse.l){
+        no_mark_snap_to_cursor(app, active_view);
+    }
+}
+
 ////////////////////////////////
 
 internal void

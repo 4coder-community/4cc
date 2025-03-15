@@ -162,10 +162,7 @@ ft__bad_rect_pack_next(Bad_Rect_Pack *pack, Vec2_i32 dim){
         }
         
         // NOTE(simon, 28/02/24): We are now sure that the character will fit.
-        
-        if ( pack->current_line_h < dim.y ) {
-            pack->current_line_h = dim.y;
-        }
+        pack->current_line_h = Max(pack->current_line_h, dim.y);
         
         result = pack->p;
         pack->p.x += dim.x;
@@ -200,7 +197,7 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
     if (error == 0){
         face = push_array_zero(arena, Face, 1);
         
-        u32 pt_size_unscaled = Max(description->parameters.pt_size, 8); 
+        u32 pt_size_unscaled = Max(description->parameters.pt_size, 8);
         u32 pt_size = (u32)(pt_size_unscaled*scale_factor);
         b32 hinting = description->parameters.hinting;
         
@@ -322,7 +319,8 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
         white.data = white_data;
         
         Bad_Rect_Pack pack = {};
-        ft__bad_rect_pack_init(&pack, V2i32(1024, 1024));
+        // ft__bad_rect_pack_init(&pack, V2i32(1024, 1024));
+        ft__bad_rect_pack_init(&pack, V2i32(128, 128));
         ft__glyph_bounds_store_uv_raw(ft__bad_rect_pack_next(&pack, white.dim), white.dim, &face->white);
         for (u16 i = 0; i < index_count; i += 1){
             Vec2_i32 dim = glyph_bitmaps[i].dim;
@@ -357,7 +355,9 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
             face->bounds[i].uv.y1 = (face->bounds[i].uv.y0 + face->bounds[i].uv.y1)/texture_dim.y;
             face->bounds[i].uv.x0 =  face->bounds[i].uv.x0/texture_dim.x;
             face->bounds[i].uv.y0 =  face->bounds[i].uv.y0/texture_dim.y;
+#if 0
             face->bounds[i].w /= texture_dim.z;
+#endif
         }
         
         {

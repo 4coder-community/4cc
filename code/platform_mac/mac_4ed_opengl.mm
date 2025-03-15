@@ -144,6 +144,11 @@ mac_fill_texture_sig(mac_gl__fill_texture){
     return(result);
 }
 
+function
+mac_free_texture_sig(mac_gl__free_texture){
+    gl__free_texture(texture);
+}
+
 function Mac_OpenGL*
 mac_gl__init(NSWindow *window, Render_Target *target){
     // NOTE(yuval): Create the Mac OpenGL Renderer
@@ -152,6 +157,7 @@ mac_gl__init(NSWindow *window, Render_Target *target){
     gl->base.render = mac_gl__render;
     gl->base.get_texture = mac_gl__get_texture;
     gl->base.fill_texture = mac_gl__fill_texture;
+    gl->base.free_texture = mac_gl__free_texture;
     
     // NOTE(yuval): Create the OpenGL view
     NSView *content_view = [window contentView];

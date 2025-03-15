@@ -976,6 +976,11 @@ graphics_fill_texture_sig(){
     return(result);
 }
 
+function
+graphics_free_texture_sig(){
+    renderer->free_texture(renderer, texid);
+}
+
 ////////////////////////////////
 
 /******************/

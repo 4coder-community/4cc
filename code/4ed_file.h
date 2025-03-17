@@ -53,6 +53,7 @@ struct Editing_File_State{
     
     History history;
     i32 current_record_index;
+    i32 saved_record_index;
     
     Dirty_State dirty;
     File_Save_State save_state;

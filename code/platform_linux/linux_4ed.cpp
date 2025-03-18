@@ -709,7 +709,6 @@ glx_create_context(GLXFBConfig fb_config){
             None
         };
         
-        //LOG("Creating GL 2.1 context... ");
         ctx = glXCreateContextAttribsARB(linuxvars.dpy, fb_config, 0, True, context_attribs);
     }
     

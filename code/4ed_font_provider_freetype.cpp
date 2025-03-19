@@ -319,8 +319,7 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
         white.data = white_data;
         
         Bad_Rect_Pack pack = {};
-        // ft__bad_rect_pack_init(&pack, V2i32(1024, 1024));
-        ft__bad_rect_pack_init(&pack, V2i32(128, 128));
+        ft__bad_rect_pack_init(&pack, V2i32(1024, 1024));
         ft__glyph_bounds_store_uv_raw(ft__bad_rect_pack_next(&pack, white.dim), white.dim, &face->white);
         for (u16 i = 0; i < index_count; i += 1){
             Vec2_i32 dim = glyph_bitmaps[i].dim;
@@ -355,9 +354,6 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
             face->bounds[i].uv.y1 = (face->bounds[i].uv.y0 + face->bounds[i].uv.y1)/texture_dim.y;
             face->bounds[i].uv.x0 =  face->bounds[i].uv.x0/texture_dim.x;
             face->bounds[i].uv.y0 =  face->bounds[i].uv.y0/texture_dim.y;
-#if 0
-            face->bounds[i].w /= texture_dim.z;
-#endif
         }
         
         {

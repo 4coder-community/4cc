@@ -25,10 +25,10 @@
 #include <stdint.h>
 
 #ifdef OS_LINUX
-    #include <inttypes.h>
-    #define FMTi64 PRIi64
+#include <inttypes.h>
+#define FMTi64 PRIi64
 #else
-    #define FMTi64 "lld"
+#define FMTi64 "lld"
 #endif
 
 ///////////////////////////////
@@ -674,7 +674,7 @@ parse_custom_id(Arena *arena, Meta_Command_Entry_Arrays *arrays, Reader *reader)
     arrays->id_count += 1;
     
     return(true);
-    }
+}
 
 ///////////////////////////////
 
@@ -694,30 +694,30 @@ parse_text(Arena *arena, Meta_Command_Entry_Arrays *entry_arrays, u8 *source_nam
                 String_Const_u8 lexeme = token_str(text, token);
                 if (string_match(lexeme, string_u8_litexpr("CUSTOM_DOC"))){
                     Temp_Read temp_read = begin_temp_read(reader);
-                
-                b32 found_start_pos = false;
-                for (i32 R = 0; R < 12; ++R){
-                    Token p_token = prev_token(reader);
-                    if (p_token.kind == TokenBaseKind_Identifier){
-                        String_Const_u8 p_lexeme = token_str(text, p_token);
-                        if (string_match(p_lexeme, string_u8_litexpr("CUSTOM_COMMAND"))){
-                            found_start_pos = true;
+                    
+                    b32 found_start_pos = false;
+                    for (i32 R = 0; R < 12; ++R){
+                        Token p_token = prev_token(reader);
+                        if (p_token.kind == TokenBaseKind_Identifier){
+                            String_Const_u8 p_lexeme = token_str(text, p_token);
+                            if (string_match(p_lexeme, string_u8_litexpr("CUSTOM_COMMAND"))){
+                                found_start_pos = true;
+                                break;
+                            }
+                        }
+                        if (p_token.kind == TokenBaseKind_EOF){
                             break;
                         }
                     }
-                    if (p_token.kind == TokenBaseKind_EOF){
-                        break;
-                    }
-                }
-                
-                if (!found_start_pos){
-                    end_temp_read(temp_read);
-                }
-                else{
-                    if (!parse_documented_command(arena, entry_arrays, reader)){
+                    
+                    if (!found_start_pos){
                         end_temp_read(temp_read);
                     }
-                }
+                    else{
+                        if (!parse_documented_command(arena, entry_arrays, reader)){
+                            end_temp_read(temp_read);
+                        }
+                    }
                 }
                 else if (string_match(lexeme, string_u8_litexpr("CUSTOM_ID"))){
                     Temp_Read temp_read = begin_temp_read(reader);
@@ -852,8 +852,8 @@ main(int argc, char **argv){
     out_directory = string_skip_chop_whitespace(out_directory);
     
     String_Const_u8 cmd_out_name = push_u8_stringf(arena, "%.*s/%s",
-                                                        string_expand(out_directory),
-                                                        COMMAND_METADATA_OUT);
+                                                   string_expand(out_directory),
+                                                   COMMAND_METADATA_OUT);
     FILE *cmd_out = fopen((char*)cmd_out_name.str, "wb");
     
     if (cmd_out != 0){
@@ -909,6 +909,17 @@ main(int argc, char **argv){
                 is_ui = "true";
             }
             
+            // NOTE(FS): The documentation string size should not double-count '\'
+            // used to escape characters.
+            auto str = entry->docstring.doc;
+            u64 docstring_size = str.size;
+            for(u64 k = 0; k < str.size; ++k) {
+                if(str.str[k] == '\\') {
+                    docstring_size -= 1;
+                    if((k + 1 < str.size) && str.str[k + 1] == '\\') ++k;
+                }
+            }
+            
             fprintf(cmd_out,
                     "{ PROC_LINKS(%.*s, 0), %s, \"%.*s\", %d, "
                     "\"%.*s\", %d, \"%s\", %d, %" FMTi64 " },\n",
@@ -917,7 +928,7 @@ main(int argc, char **argv){
                     string_expand(entry->name),
                     (i32)entry->name.size,
                     string_expand(entry->docstring.doc),
-                    (i32)entry->docstring.doc.size,
+                    (i32)docstring_size,
                     printable.str,
                     (i32)source_name.size,
                     entry->line_number);

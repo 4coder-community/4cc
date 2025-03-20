@@ -154,7 +154,7 @@ gl__fill_texture(Texture_Kind texture_kind, u32 texid, Vec3_i32 p, Vec3_i32 dim,
     // font rendering code and other platforms. Fortunately the only call that specified 0 for the
     // texture handle was for the creation of the fallback texture in gl_render, and we can modify
     // that call to pass the fallback texture handle.
-    Assert( texid != 0 ); 
+    Assert( texid != 0 );
     
     if (dim.x > 0 && dim.y > 0 && dim.z > 0){
         
@@ -220,20 +220,20 @@ struct output_t {
 };
 
 output_t main(input_t input) {
-	
+
     output_t output;
 
     output.position = float4( mul( view_m, ( input.vertex_p - view_t ) ), 0.0, 1.0 );
     // NOTE(simon, 28/02/24): The input colors are BGRA, we need them as RGBA.
     output.color = input.vertex_c.zyxw;
     output.uvw = input.vertex_t;
-	output.xy = input.vertex_p;
-	output.half_thickness = input.vertex_ht;
-	
+    output.xy = input.vertex_p;
+    output.half_thickness = input.vertex_ht;
+
     float2 center = input.vertex_t.xy;
     float2 half_dim = abs( input.vertex_p - center );
     output.adjusted_half_dim = half_dim - input.vertex_t.zz + float2( 0.5, 0.5 );
-    
+
     return output;
 }
 )foo";

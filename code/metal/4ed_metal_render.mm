@@ -510,8 +510,8 @@ metal__make_buffer(u32 size, id<MTLDevice> device){
         texture_descriptor.pixelFormat = MTLPixelFormatR8Unorm;
         texture_descriptor.width = dim.x;
         texture_descriptor.height = dim.y;
-        texture_descriptor.depth = dim.z;
-        
+        texture_descriptor.arrayLength = dim.z;
+
         // NOTE(yuval): Create the texture from the device using the descriptor and add it to the textures array.
         Metal_Texture texture = [_device newTextureWithDescriptor:texture_descriptor];
         texture_slot->texture = texture;
@@ -531,17 +531,21 @@ metal__make_buffer(u32 size, id<MTLDevice> device){
             Metal_Texture texture = texture_slot->texture;
             
             if (texture != 0){
+                // https://developer.apple.com/documentation/metal/mtlregion
+                // for 2d texture origin.z is 0, and depth is 1
                 MTLRegion replace_region = {
-                    {(NSUInteger)p.x, (NSUInteger)p.y, (NSUInteger)p.z},
-                    {(NSUInteger)dim.x, (NSUInteger)dim.y, (NSUInteger)dim.z}
+                    {(NSUInteger)p.x, (NSUInteger)p.y, 0},
+                    {(NSUInteger)dim.x, (NSUInteger)dim.y, 1}
                 };
                 
                 // NOTE(yuval): Fill the texture with data
                 [texture replaceRegion:replace_region
                         mipmapLevel:0
+                        slice:p.z
                         withBytes:data
-                        bytesPerRow:dim.x];
-                
+                        bytesPerRow:dim.x
+                        bytesPerImage:0];
+
                 result = true;
             }
         }

@@ -53,6 +53,12 @@ build_language_model(void){
     sm_direct_token_kind("LiteralIntegerOctUL");
     sm_direct_token_kind("LiteralIntegerOctLL");
     sm_direct_token_kind("LiteralIntegerOctULL");
+    sm_direct_token_kind("LiteralIntegerBin");
+    sm_direct_token_kind("LiteralIntegerBinU");
+    sm_direct_token_kind("LiteralIntegerBinL");
+    sm_direct_token_kind("LiteralIntegerBinUL");
+    sm_direct_token_kind("LiteralIntegerBinLL");
+    sm_direct_token_kind("LiteralIntegerBinULL");
     
     sm_select_base_kind(TokenBaseKind_LiteralFloat);
     sm_direct_token_kind("LiteralFloat32");
@@ -267,6 +273,7 @@ build_language_model(void){
     
     Flag *is_hex = sm_add_flag(FlagResetRule_AutoZero);
     Flag *is_oct = sm_add_flag(FlagResetRule_AutoZero);
+    Flag *is_bin = sm_add_flag(FlagResetRule_AutoZero);
     Flag *is_wide  = sm_add_flag(FlagResetRule_AutoZero);
     Flag *is_utf8  = sm_add_flag(FlagResetRule_AutoZero);
     Flag *is_utf16 = sm_add_flag(FlagResetRule_AutoZero);
@@ -299,8 +306,10 @@ build_language_model(void){
     AddState(fnumber_exponent_digits);
     
     AddState(number_hex_first);
+    AddState(number_bin_first);
     AddState(number_hex);
     AddState(number_oct);
+    AddState(number_bin);
     
     AddState(U_number);
     AddState(L_number);
@@ -542,6 +551,7 @@ build_language_model(void){
     sm_case("L", L_number);
     sm_case("l", l_number);
     sm_case("Xx", number_hex_first);
+    sm_case("Bb", number_bin_first);
     sm_case("01234567", number_oct);
     {
         Emit_Rule *emit = sm_emit_rule();
@@ -644,7 +654,19 @@ build_language_model(void){
     
     ////
     
+    sm_select_state(number_bin_first);
+    sm_set_flag(is_bin, true);
+    sm_case("01", number_bin);
+    {
+        Emit_Rule *emit = sm_emit_rule();
+        sm_emit_handler_direct("LexError");
+        sm_fallback_peek(emit);
+    }
+    
+    ////
+    
     sm_select_state(number_hex);
+    sm_set_flag(is_hex, true);
     sm_case("0123456789abcdefABCDEF", number_hex);
     sm_case("Uu", U_number);
     sm_case("L", L_number);
@@ -671,6 +693,20 @@ build_language_model(void){
     
     ////
     
+    sm_select_state(number_bin);
+    sm_set_flag(is_bin, true);
+    sm_case("01", number_bin);
+    sm_case("Uu", U_number);
+    sm_case("L", L_number);
+    sm_case("l", l_number);
+    {
+        Emit_Rule *emit = sm_emit_rule();
+        sm_emit_handler_direct("LiteralIntegerBin");
+        sm_fallback_peek(emit);
+    }
+    
+    ////
+    
     sm_select_state(U_number);
     sm_case("L", UL_number);
     sm_case("l", Ul_number);
@@ -678,6 +714,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexU");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctU");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinU");
         sm_emit_handler_direct("LiteralIntegerU");
         sm_fallback_peek(emit);
     }
@@ -691,6 +728,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinL");
         sm_emit_handler_direct("LiteralIntegerL");
         sm_fallback_peek(emit);
     }
@@ -704,6 +742,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinL");
         sm_emit_handler_direct("LiteralIntegerL");
         sm_fallback_peek(emit);
     }
@@ -716,6 +755,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexLL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctLL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinLL");
         sm_emit_handler_direct("LiteralIntegerLL");
         sm_fallback_peek(emit);
     }
@@ -728,6 +768,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexUL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctUL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinUL");
         sm_emit_handler_direct("LiteralIntegerUL");
         sm_fallback_peek(emit);
     }
@@ -740,6 +781,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexUL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctUL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinUL");
         sm_emit_handler_direct("LiteralIntegerUL");
         sm_fallback_peek(emit);
     }
@@ -751,6 +793,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexUL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctUL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinUL");
         sm_emit_handler_direct("LiteralIntegerUL");
         sm_fallback_peek(emit);
     }
@@ -762,6 +805,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexUL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctUL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinUL");
         sm_emit_handler_direct("LiteralIntegerUL");
         sm_fallback_peek(emit);
     }
@@ -773,6 +817,7 @@ build_language_model(void){
         Emit_Rule *emit = sm_emit_rule();
         sm_emit_handler_direct(is_hex, "LiteralIntegerHexULL");
         sm_emit_handler_direct(is_oct, "LiteralIntegerOctULL");
+        sm_emit_handler_direct(is_bin, "LiteralIntegerBinULL");
         sm_emit_handler_direct("LiteralIntegerULL");
         sm_fallback_peek(emit);
     }

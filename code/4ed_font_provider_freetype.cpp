@@ -348,7 +348,6 @@ ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor
                 face->white.uv.y1 = (face->white.uv.y0 + face->white.uv.y1)/texture_dim.y;
                 face->white.uv.x0 =  face->white.uv.x0/texture_dim.x;
                 face->white.uv.y0 =  face->white.uv.y0/texture_dim.y;
-                face->white.w /= texture_dim.z;
             }
             
             for (u16 i = 0; i < index_count; i += 1){

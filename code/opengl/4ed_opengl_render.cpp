@@ -73,7 +73,7 @@ gl__error_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsiz
     }
 }
 
-char *gl__header = R"foo(#version 130
+char *gl__header = R"foo(#version 150
         )foo";
 
 char *gl__vertex = R"foo(

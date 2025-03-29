@@ -398,6 +398,10 @@ auto_indent_buffer(Application_Links *app, Buffer_ID buffer, Range_i64 pos, Inde
     if (indent_with_tabs){
         AddFlag(flags, Indent_UseTab);
     }
+    b32 clear_blank_lines = def_get_config_b32(vars_save_string_lit("indent_clear_blank_lines"));
+    if (clear_blank_lines) {
+      AddFlag(flags, Indent_ClearLine);
+    }
     auto_indent_buffer(app, buffer, pos, flags, indent_width, tab_width);
 }
 

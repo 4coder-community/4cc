@@ -870,6 +870,7 @@ main(int argc, char **argv){
         fprintf(cmd_out, "#else\n");
         fprintf(cmd_out, "#define PROC_LINKS(x,y) y\n");
         fprintf(cmd_out, "#endif\n");
+        fprintf(cmd_out, "#define CSTR_WITH_SIZE(x) (x), (sizeof(x)-1)\n");
         
         fprintf(cmd_out, "#if defined(CUSTOM_COMMAND_SIG)\n");
         for (i32 i = 0; i < entry_count; ++i){
@@ -909,28 +910,14 @@ main(int argc, char **argv){
                 is_ui = "true";
             }
             
-            // NOTE(FS): The documentation string size should not double-count '\'
-            // used to escape characters.
-            auto str = entry->docstring.doc;
-            u64 docstring_size = str.size;
-            for(u64 k = 0; k < str.size; ++k) {
-                if(str.str[k] == '\\') {
-                    docstring_size -= 1;
-                    if((k + 1 < str.size) && str.str[k + 1] == '\\') ++k;
-                }
-            }
-            
             fprintf(cmd_out,
-                    "{ PROC_LINKS(%.*s, 0), %s, \"%.*s\", %d, "
-                    "\"%.*s\", %d, \"%s\", %d, %" FMTi64 " },\n",
+                    "{ PROC_LINKS(%.*s, 0), %s, CSTR_WITH_SIZE(\"%.*s\"), "
+                    "CSTR_WITH_SIZE(\"%.*s\"), CSTR_WITH_SIZE(\"%s\"), %" FMTi64 " },\n",
                     string_expand(entry->name),
                     is_ui,
                     string_expand(entry->name),
-                    (i32)entry->name.size,
                     string_expand(entry->docstring.doc),
-                    (i32)docstring_size,
                     printable.str,
-                    (i32)source_name.size,
                     entry->line_number);
             end_temp(temp);
         }
@@ -943,6 +930,7 @@ main(int argc, char **argv){
             ++id;
         }
         
+        fprintf(cmd_out, "#undef CSTR_WITH_SIZE\n");
         fprintf(cmd_out, "#endif\n");
         
         fclose(cmd_out);

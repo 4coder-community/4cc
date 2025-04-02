@@ -67,6 +67,7 @@ global_const u32 metal__invalid_texture_slot_locator = (u32)-1;
 - (u32)get_texture_of_dim:(Vec3_i32)dim kind:(Texture_Kind)kind;
 - (b32)fill_texture:(u32)texture kind:(Texture_Kind)kind pos:(Vec3_i32)p dim:(Vec3_i32)dim data:(void*)data;
 - (void)bind_texture:(u32)handle encoder:(id<MTLRenderCommandEncoder>)render_encoder;
+- (void)free_texture:(u32)handle;
 - (Metal_Texture_Slot*)get_texture_slot_at_locator:(Metal_Texture_Slot_Locator)locator;
 - (Metal_Texture_Slot*)get_texture_slot_at_handle:(u32)handle;
 
@@ -564,6 +565,14 @@ metal__make_buffer(u32 size, id<MTLDevice> device){
         }
     }
 }
+
+- (void)free_texture:(u32)handle{
+    Metal_Texture_Slot *texture_slot = [self get_texture_slot_at_handle:handle];
+    if (texture_slot){
+        sll_queue_push(_texture_slots.first_free_slot, _texture_slots.last_free_slot, texture_slot);
+    }
+}
+
 
 - (Metal_Texture_Slot*)get_texture_slot_at_locator:(Metal_Texture_Slot_Locator)locator{
     Metal_Texture_Slot *result = 0;

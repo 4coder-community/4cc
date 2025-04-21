@@ -560,6 +560,11 @@ gl_render(Render_Target *t){
          group = group->next){
         Rect_i32 box = Ri32(group->clip_box);
         
+        // NOTE(FS): Ignore this group if we our scissor rectangle is not well defined
+        if ((rect_width(box) <= 0) || (rect_height(box) <= 0)) {
+            continue;
+        }
+        
         D3D11_RECT group_scissor = { };
         group_scissor.left = box.x0;
         group_scissor.right = box.x1;

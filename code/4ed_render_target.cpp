@@ -131,10 +131,67 @@ end_render_section(Render_Target *target){
 ////////////////////////////////
 
 internal void
+draw_rectangle_outline_corner_parameters(Render_Target *target, Rect_f32 rect,
+                                         f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1,
+                                         f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1,
+                                         u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1){
+    
+    if ( rect_overlap(rect, target->current_clip_box) ) {
+        
+        if (roundness_x0y0 < epsilon_f32) roundness_x0y0 = 0.f;
+        if (roundness_x1y0 < epsilon_f32) roundness_x1y0 = 0.f;
+        if (roundness_x0y1 < epsilon_f32) roundness_x0y1 = 0.f;
+        if (roundness_x1y1 < epsilon_f32) roundness_x1y1 = 0.f;
+        
+        thickness_x0y0 = clamp_bot(1.f, thickness_x0y0);
+        thickness_x1y0 = clamp_bot(1.f, thickness_x1y0);
+        thickness_x0y1 = clamp_bot(1.f, thickness_x0y1);
+        thickness_x1y1 = clamp_bot(1.f, thickness_x1y1);
+        
+        Render_Vertex vertices[6] = {};
+        vertices[0].xy = V2f32(rect.x0, rect.y0);
+        vertices[1].xy = vertices[3].xy = V2f32(rect.x1, rect.y0);
+        vertices[2].xy = vertices[4].xy = V2f32(rect.x0, rect.y1);
+        vertices[5].xy = V2f32(rect.x1, rect.y1);
+        
+        vertices[0].color = color_x0y0;
+        vertices[1].color = vertices[3].color = color_x1y0;
+        vertices[2].color = vertices[4].color = color_x0y1;
+        vertices[5].color = color_x1y1;
+        
+        vertices[0].half_thickness = thickness_x0y0/2.f;
+        vertices[1].half_thickness = vertices[3].half_thickness = thickness_x1y0/2.f;
+        vertices[2].half_thickness = vertices[4].half_thickness = thickness_x0y1/2.f;
+        vertices[5].half_thickness = thickness_x1y1/2.f;
+        
+        Vec2_f32 center = rect_center(rect);
+        
+        vertices[0].uvw = V3f32(center.x, center.y, roundness_x0y0);
+        vertices[1].uvw = vertices[3].uvw = V3f32(center.x, center.y, roundness_x1y0);
+        vertices[2].uvw = vertices[4].uvw = V3f32(center.x, center.y, roundness_x0y1);
+        vertices[5].uvw = V3f32(center.x, center.y, roundness_x1y1);
+        
+        draw__write_vertices_in_current_group(target, vertices, ArrayCount(vertices));
+    }
+}
+
+internal void
+draw_rectangle_corner_parameters(Render_Target *target, Rect_f32 rect,
+                                 f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1,
+                                 u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1){
+    Vec2_f32 dim = rect_dim(rect);
+    f32 thickness = Max(dim.x, dim.y);
+    draw_rectangle_outline_corner_parameters(target, rect,
+                                             roundness_x0y0, roundness_x1y0, roundness_x0y1, roundness_x1y1,
+                                             thickness, thickness, thickness, thickness,
+                                             color_x0y0, color_x1y0, color_x0y1, color_x1y1);
+}
+
+internal void
 draw_rectangle_outline(Render_Target *target, Rect_f32 rect, f32 roundness, f32 thickness, u32 color){
     
     if ( rect_overlap(rect, target->current_clip_box) ) {
-            
+        
         if (roundness < epsilon_f32){
             roundness = 0.f;
         }

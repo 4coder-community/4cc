@@ -83,8 +83,10 @@ struct Lister{
     b32 set_vertical_focus_to_item;
     Lister_Node *highlighted_node;
     void *hot_user_data;
+
     i32 item_index;
     i32 raw_item_index;
+    i32 hovered_index;
     
     Basic_Scroll scroll;
     i32 visible_count;

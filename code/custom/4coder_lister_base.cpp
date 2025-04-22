@@ -288,6 +288,7 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
     
     lister->scroll.position.y = clamp_range(scroll_range, lister->scroll.position.y);
     lister->scroll.position.x = 0.f;
+    lister->hovered_index = -1;
     
     scroll_y = lister->scroll.position.y;
     f32 y_pos = list_rect.y0 - scroll_y;
@@ -306,6 +307,8 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         Rect_f32 item_inner = rect_inner(item_rect, 3.f);
         
         b32 hovered = rect_contains_point(item_rect, m_p);
+        if(hovered) lister->hovered_index = i;
+        
         UI_Highlight_Level highlight = UIHighlight_None;
         if (node == lister->highlighted_node){
             highlight = UIHighlight_Active;
@@ -470,42 +473,6 @@ lister_activate(Application_Links *app, Lister *lister, void *user_data, b32 mou
     lister->out.user_data = user_data;
 }
 
-function void*
-lister_user_data_at_p(Application_Links *app, View_ID view, Lister *lister, Vec2_f32 m_p){
-    Rect_f32 region = view_get_screen_rect(app, view);
-    // TODO(allen): eliminate this. bad bad bad bad :(
-    region = rect_inner(region, 3.f);
-    
-    Face_ID face_id = get_face_id(app, 0);
-    Face_Metrics metrics = get_face_metrics(app, face_id);
-    f32 line_height = metrics.line_height;
-    f32 block_height = lister_get_block_height(line_height);
-    f32 text_field_height = lister_get_text_field_height(line_height);
-    
-    b64 showing_file_bar = false;
-    b32 hide_file_bar_in_ui = def_get_config_b32(vars_save_string_lit("hide_file_bar_in_ui"));
-    if (view_get_setting(app, view, ViewSetting_ShowFileBar, &showing_file_bar) &&
-        showing_file_bar && hide_file_bar_in_ui){
-        Rect_f32_Pair pair = layout_file_bar_on_top(region, line_height);
-        region = pair.max;
-    }
-    
-    Rect_f32_Pair pair = lister_get_top_level_layout(region, text_field_height);
-    Rect_f32 list_rect = pair.max;
-    
-    void *result = 0;
-    if (rect_contains_point(list_rect, m_p)){
-        f32 y = m_p.y - list_rect.y0 + lister->scroll.position.y;
-        i32 index = (i32)(y/block_height);
-        if (0 <= index && index < lister->filtered.count){
-            Lister_Node *node = lister->filtered.node_ptrs[index];
-            result = node->user_data;
-        }
-    }
-    
-    return(result);
-}
-
 function Lister_Result
 run_lister(Application_Links *app, Lister *lister){
     lister->filter_restore_point = begin_temp(lister->arena);
@@ -634,9 +601,10 @@ run_lister(Application_Links *app, Lister *lister){
                 switch (in.event.mouse.code){
                     case MouseCode_Left:
                     {
-                        Vec2_f32 p = V2f32(in.event.mouse.p);
-                        void *clicked = lister_user_data_at_p(app, view, lister, p);
-                        lister->hot_user_data = clicked;
+                        if (0 <= lister->hovered_index &&
+                            lister->hovered_index < lister->options.count){
+                            lister->hot_user_data = lister_get_user_data(lister, lister->hovered_index);
+                        }
                     }break;
                     
                     default:
@@ -652,11 +620,13 @@ run_lister(Application_Links *app, Lister *lister){
                     case MouseCode_Left:
                     {
                         if (lister->hot_user_data != 0){
-                            Vec2_f32 p = V2f32(in.event.mouse.p);
-                            void *clicked = lister_user_data_at_p(app, view, lister, p);
-                            if (lister->hot_user_data == clicked){
-                                lister_activate(app, lister, clicked, true);
-                                result = ListerActivation_Finished;
+                            if (0 <= lister->hovered_index &&
+                                lister->hovered_index < lister->options.count){
+                                void *clicked = lister_get_user_data(lister, lister->hovered_index);
+                                if(lister->hot_user_data == clicked) {
+                                    lister_activate(app, lister, clicked, true);
+                                    result = ListerActivation_Finished;
+                                }
                             }
                         }
                         lister->hot_user_data = 0;

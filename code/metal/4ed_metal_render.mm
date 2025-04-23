@@ -57,7 +57,7 @@ struct Metal_Texture_Slot_List{
     Metal_Texture_Slot *last_free_slot;
 };
 
-global_const u32 metal__invalid_texture_slot_locator = (u32)-1;
+global_const u32 metal__invalid_texture_slot_locator = 0;
 
 ////////////////////////////////
 
@@ -285,6 +285,11 @@ metal__make_buffer(u32 size, id<MTLDevice> device){
     // NOTE(yuval): Initialize the texture slot list
     block_zero_struct(&_texture_slots);
     
+	// NOTE(simon): Other platforms use 0 as invalid handle, so we allocate the first texture here (it should be 0),
+	// and never use it so we can use 0 as the invalid handle.
+	u32 reserved_texture_slot_do_not_use = [self get_texture_of_dim:V3i32(2, 2, 1) kind:TextureKind_Mono];
+	Assert( reserved_texture_slot_do_not_use == 0 );
+	
     // NOTE(yuval): Create the fallback texture
     _target->fallback_texture_id = [self get_texture_of_dim:V3i32(2, 2, 1)
             kind:TextureKind_Mono];

@@ -420,7 +420,7 @@ App_Step_Sig(app_step){
         event.mouse.modifiers = copy_modifier_set(scratch, &modifiers);
         push_input_event(scratch, &input_list, &event);
     }
-    else if (input->mouse.release_l){
+    if (input->mouse.release_l){
         Input_Event event = {};
         event.kind = InputEventKind_MouseButtonRelease;
         event.mouse.code = MouseCode_Left;
@@ -436,7 +436,7 @@ App_Step_Sig(app_step){
         event.mouse.modifiers = copy_modifier_set(scratch, &modifiers);
         push_input_event(scratch, &input_list, &event);
     }
-    else if (input->mouse.release_r){
+    if (input->mouse.release_r){
         Input_Event event = {};
         event.kind = InputEventKind_MouseButtonRelease;
         event.mouse.code = MouseCode_Right;

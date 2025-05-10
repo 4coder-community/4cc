@@ -307,7 +307,7 @@ lister_render(Application_Links *app, Frame_Info frame_info, View_ID view){
         Rect_f32 item_inner = rect_inner(item_rect, 3.f);
         
         b32 hovered = rect_contains_point(item_rect, m_p);
-        if(hovered) lister->hovered_index = i;
+        if(hovered) lister->hovered_index = node->raw_index;
         
         UI_Highlight_Level highlight = UIHighlight_None;
         if (node == lister->highlighted_node){

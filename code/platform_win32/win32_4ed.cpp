@@ -1764,6 +1764,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
 #endif
     
     log_os(" window created successfully\n");
+    HDC hdc = GetDC(win32vars.window_handle);
     
     GetClientRect(win32vars.window_handle, &window_rect);
     win32_resize(window_rect.right - window_rect.left, window_rect.bottom - window_rect.top);
@@ -2049,10 +2050,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
         gl_render(&target);
         g_dx11.swap_chain->Present( 1, 0 );
 #else
-        HDC hdc = GetDC(win32vars.window_handle);
         gl_render(&target);
         SwapBuffers(hdc);
-        ReleaseDC(win32vars.window_handle, hdc);
 #endif
         
         // NOTE(allen): toggle full screen

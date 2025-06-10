@@ -236,9 +236,22 @@ map_get_event_breakdown(Input_Event *event){
             result.skip_self_mod = event->key.code;
         }break;
         
+        case InputEventKind_KeyRelease:
+        {
+            result.key = mapping__key(InputEventKind_KeyRelease, event->key.code);
+            result.mod_set = &event->key.modifiers;
+            result.skip_self_mod = event->key.code;
+        }break;
+        
         case InputEventKind_MouseButton:
         {
             result.key = mapping__key(InputEventKind_MouseButton, event->mouse.code);
+            result.mod_set = &event->mouse.modifiers;
+        }break;
+        
+        case InputEventKind_MouseButtonRelease:
+        {
+            result.key = mapping__key(InputEventKind_MouseButtonRelease, event->mouse.code);
             result.mod_set = &event->mouse.modifiers;
         }break;
         

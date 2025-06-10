@@ -9,6 +9,8 @@
 
 // TOP
 
+#define GENERATED_BY "code/4ed_graphics_api.cpp"
+
 #include "4ed_api_definition_main.cpp"
 
 function API_Definition*
@@ -28,6 +30,11 @@ define_api(Arena *arena){
         api_param(arena, call, "Vec3_i32", "p");
         api_param(arena, call, "Vec3_i32", "dim");
         api_param(arena, call, "void*", "data");
+    }
+    
+    {
+        API_Call *call = api_call(arena, api, "free_texture", "void");
+        api_param(arena, call, "u32", "texid");
     }
     
     return(api);

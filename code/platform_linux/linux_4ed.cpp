@@ -588,6 +588,11 @@ graphics_fill_texture_sig(){
     return(gl__fill_texture(texture_kind, texture, p, dim, data));
 }
 
+internal
+graphics_free_texture_sig(){
+    gl__free_texture(texid);
+}
+
 ////////////////////////////
 
 internal Face*

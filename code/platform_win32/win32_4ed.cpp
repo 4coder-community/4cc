@@ -671,6 +671,11 @@ graphics_fill_texture_sig(){
 }
 
 internal
+graphics_free_texture_sig(){
+    gl__free_texture(texid);
+}
+
+internal
 font_make_face_sig(){
     return(ft__font_make_face(arena, description, scale_factor));
 }

@@ -153,6 +153,9 @@ font_set_modify_face(Font_Set *set, Face_ID id, Face_Description *description){
         Arena arena = make_arena_system();
         Face *face = font_make_face(&arena, description, set->scale_factor);
         if (face != 0){
+            if (slot->face->texture != 0){
+                graphics_free_texture(slot->face->texture);
+            }
             linalloc_clear(&slot->arena);
             slot->arena = arena;
             slot->face = face;

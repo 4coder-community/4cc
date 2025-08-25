@@ -1,11 +1,11 @@
 /*
- * Mr. 4th Dimention - Allen Webster
- *
- * 19.08.2015
- *
- * Viewing
- *
- */
+* Mr. 4th Dimention - Allen Webster
+*
+* 19.08.2015
+*
+* Viewing
+*
+*/
 
 // TOP
 

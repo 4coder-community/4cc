@@ -1194,19 +1194,19 @@ CUSTOM_DOC("Queries the user for a needle and string. Replaces all occurences of
 CUSTOM_COMMAND_SIG(replace_in_all_buffers)
 CUSTOM_DOC("Queries the user for a needle and string. Replaces all occurences of needle with string in all editable buffers.")
 {
-    global_history_edit_group_begin(app);
-    
     Scratch_Block scratch(app);
     Query_Bar_Group group(app);
     String_Pair pair = query_user_replace_pair(app, scratch);
-    for (Buffer_ID buffer = get_buffer_next(app, 0, Access_ReadWriteVisible);
-         buffer != 0;
-         buffer = get_buffer_next(app, buffer, Access_ReadWriteVisible)){
-        Range_i64 range = buffer_range(app, buffer);
-        replace_in_range(app, buffer, range, pair.a, pair.b);
+    if (pair.valid){
+        global_history_edit_group_begin(app);
+        for (Buffer_ID buffer = get_buffer_next(app, 0, Access_ReadWriteVisible);
+             buffer != 0;
+             buffer = get_buffer_next(app, buffer, Access_ReadWriteVisible)){
+            Range_i64 range = buffer_range(app, buffer);
+            replace_in_range(app, buffer, range, pair.a, pair.b);
+        }
+        global_history_edit_group_end(app);
     }
-    
-    global_history_edit_group_end(app);
 }
 
 function void

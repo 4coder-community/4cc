@@ -6,7 +6,7 @@ Welcome to the 4coder community repository.
 
 ## Windows
 1. Setup the MSVC toolchain in your environment, this can be done with the `code/custom/bin/setup_cl_x64.bat` script
-2. Download the [7-Zip installer](https://7-zip.org/download.html). Install 7-Zip to `C:\Program Files\7-Zip`. Call the `package.bat` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
+2. Download the [7-Zip installer](https://7-zip.org/download.html) for 64-bit Windows x64. Install 7-Zip to `C:\Program Files\7-Zip`. Call the `package.bat` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
    1. `$ cd 4cc\code`
    2. `.\bin\package.bat`
 3. You can also use the `build.bat` script if you want just build the binaries (this produces the build artifacts in the `build` directory, this doesn't produce a functional distribution)

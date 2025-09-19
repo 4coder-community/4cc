@@ -18,6 +18,9 @@ typedef mac_get_texture_sig(mac_get_texture_type);
 #define mac_fill_texture_sig(name) b32 name(Mac_Renderer *renderer, Texture_Kind texture_kind, u32 texture, Vec3_i32 p, Vec3_i32 dim, void* data)
 typedef mac_fill_texture_sig(mac_fill_texture_type);
 
+#define mac_free_texture_sig(name) void name(Mac_Renderer *renderer, u32 texture)
+typedef mac_free_texture_sig(mac_free_texture_type);
+
 typedef i32 Mac_Renderer_Kind;
 enum{
     MacRenderer_OpenGL,
@@ -31,6 +34,7 @@ struct Mac_Renderer{
     
     mac_get_texture_type *get_texture;
     mac_fill_texture_type *fill_texture;
+    mac_free_texture_type *free_texture;
 };
 
 ////////////////////////////////

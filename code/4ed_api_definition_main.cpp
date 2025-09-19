@@ -31,7 +31,7 @@ int
 main(void){
     Arena arena = make_arena_malloc();
     API_Definition *api = define_api(&arena);
-    if (!api_definition_generate_api_includes(&arena, api, get_api_group(), 0)){
+    if (!api_definition_generate_api_includes(&arena, api, get_api_group(), 0, SCu8(GENERATED_BY))){
         return(1);
     }
     return(0);

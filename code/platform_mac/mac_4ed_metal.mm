@@ -44,6 +44,12 @@ mac_fill_texture_sig(mac_metal__fill_texture){
     return(result);
 }
 
+function
+mac_free_texture_sig(mac_metal__free_texture){
+    Mac_Metal *metal = (Mac_Metal*)renderer;
+    [metal->renderer free_texture:texture];
+}
+
 function Mac_Metal*
 mac_metal__init(NSWindow *window, Render_Target *target){
     // NOTE(yuval): Create the Mac Metal rendere
@@ -52,7 +58,8 @@ mac_metal__init(NSWindow *window, Render_Target *target){
     metal->base.render = mac_metal__render;
     metal->base.get_texture = mac_metal__get_texture;
     metal->base.fill_texture = mac_metal__fill_texture;
-
+    metal->base.free_texture = mac_metal__free_texture;
+    
     // NOTE(yuval): Create the Metal view
     NSView *content_view = [window contentView];
 

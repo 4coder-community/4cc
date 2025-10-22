@@ -816,16 +816,17 @@ internal b32
 release_font_and_update(Models *models, Face *face, Face *replacement_face){
     b32 success = false;
     Assert(replacement_face != 0 && replacement_face != face);
-    if (font_set_release_face(&models->font_set, face->id)){
+    Face_ID face_id = face->id;
+    if (font_set_release_face(&models->font_set, face_id)){
         for (Node *node = models->working_set.active_file_sentinel.next;
              node != &models->working_set.active_file_sentinel;
              node = node->next){
             Editing_File *file = CastFromMember(Editing_File, main_chain_node, node);
-            if (file->settings.face_id == face->id){
+            if (file->settings.face_id == face_id){
                 file->settings.face_id = replacement_face->id;
             }
         }
-        if (models->global_face_id == face->id){
+        if (models->global_face_id == face_id){
             models->global_face_id = replacement_face->id;
         }
         success = true;

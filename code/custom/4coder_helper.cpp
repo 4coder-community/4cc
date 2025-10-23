@@ -1118,7 +1118,7 @@ buffer_has_name_with_star(Application_Links *app, Buffer_ID buffer){
 function u8
 buffer_get_char(Application_Links *app, Buffer_ID buffer_id, i64 pos){
     i64 buffer_size = buffer_get_size(app, buffer_id);
-    u8 result = ' ';
+    u8 result = '\0';
     if (0 <= pos && pos < buffer_size){
         buffer_read_range(app, buffer_id, Ii64(pos, pos + 1), &result);
     }

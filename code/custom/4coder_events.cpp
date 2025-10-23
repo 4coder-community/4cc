@@ -92,9 +92,11 @@ get_modifiers(Input_Event *event){
     Input_Modifier_Set *result = 0;
     switch (event->kind){
         case InputEventKind_KeyStroke:
+        case InputEventKind_KeyRelease:
         {
             result = &event->key.modifiers;
         }break;
+        case InputEventKind_MouseButtonRelease:
         case InputEventKind_MouseButton:
         {
             result = &event->mouse.modifiers;
@@ -173,6 +175,11 @@ to_writable(Input_Event *event){
 function b32
 match_key_code(Input_Event *event, Key_Code code){
     return(event->kind == InputEventKind_KeyStroke && event->key.code == code);
+}
+
+function b32
+match_key_code_release(Input_Event *event, Key_Code code){
+    return(event->kind == InputEventKind_KeyRelease && event->key.code == code);
 }
 
 function b32

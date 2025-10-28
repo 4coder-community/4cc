@@ -13,7 +13,7 @@ set src_root=%repo_root%\code
 set build_root=%repo_root%\build
 set bin_root=%repo_root%\code\bin
 set custom_root=%repo_root%\code\custom
-set custom_bin=%custom_root\bin
+set custom_bin=%custom_root%\bin
 
 call %custom_bin%\setup_cl_x64.bat
 

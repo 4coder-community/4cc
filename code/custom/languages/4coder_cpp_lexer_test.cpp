@@ -436,7 +436,7 @@ print_token_list(Token_List *list, String_Const_u8 text){
     for (Token_Block *block = list->first;
          block != 0;
          block = block->next){
-        i32 count = block->count;
+        i64 count = block->count;
         Token *token = block->tokens;
         for (i32 i = 0; i < count; i += 1, token += 1){
             printf("[%5llu, %5llu) %20s / %20s : 0x%04x / 0x%04x\n",

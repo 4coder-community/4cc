@@ -672,7 +672,6 @@ build_language_model(void){
     ////
     
     sm_select_state(number_hex);
-    sm_set_flag(is_hex, true);
     sm_case("0123456789abcdefABCDEF", number_hex);
     sm_case("Uu", U_number);
     sm_case("L", L_number);
@@ -700,7 +699,6 @@ build_language_model(void){
     ////
     
     sm_select_state(number_bin);
-    sm_set_flag(is_bin, true);
     sm_case("01", number_bin);
     sm_case("Uu", U_number);
     sm_case("L", L_number);

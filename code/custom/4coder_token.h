@@ -45,6 +45,7 @@ char *token_base_kind_names[] ={
     "ScopeClose",
     "ParentheticalOpen",
     "ParentheticalClose",
+    "StatementClose",
 };
 
 typedef u16 Token_Base_Flag;

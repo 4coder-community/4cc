@@ -1,8 +1,14 @@
 /*
 4coder_lex_gen_cpp.cpp - Model definition for a C++ lexer.
+
+To compile this file you'll need to pass the "custom" directory to search for include files.
+For example for MSVC:
+cl 4coder_cpp_lexer_gen.cpp -ID:\\temp\\4cc\\code\\custom
 */
 
 // TOP
+
+#define GENERATED_BY "custom/languages/4coder_cpp_lexer_gen.cpp"
 
 #define LANG_NAME_LOWER cpp
 #define LANG_NAME_CAMEL Cpp

@@ -1,5 +1,9 @@
 /*
 4coder_lexer_cpp_test.cpp - A tester for the C++ lexer.
+
+When using MSVC you'll need to use the -FC flag (using absolute path) for the executable to find the test file.
+For example:
+cl 4coder_cpp_lexer_test.cpp -ID:\temp\4cc\code\custom\ -Zi -Od -FC
 */
 
 // TOP
@@ -339,6 +343,76 @@
 078
 087
 
+0b0
+0b1
+0b2
+
+0b02
+0b12
+0b22
+0b0a
+0b1a
+
+0b0l
+0b1l
+
+0b0u
+0b1u
+
+0b0L
+0b1L
+
+0b0U
+0b1U
+
+0b0lu
+0b1lu
+
+0b0Lu
+0b1Lu
+
+0b0lU
+0b1lU
+
+0b0LU
+0b1LU
+
+0b0ul
+0b1ul
+
+0b0uL
+0b1uL
+
+0b0Ul
+0b1Ul
+
+0b0UL
+0b1UL
+
+0b0llu
+0b1llu
+
+0b0LLu
+0b1LLu
+
+0b0llU
+0b1llU
+
+0b0LLU
+0b1LLU
+
+0b0ull
+0b1ull
+
+0b0uLL
+0b1uLL
+
+0b0Ull
+0b1Ull
+
+0b0ULL
+0b1ULL
+
 "foo"
 "foo
 foo"
@@ -469,7 +543,7 @@ int main(void){
     path_to_self = string_remove_last_folder(path_to_self);
     String_Const_u8 path_to_src = string_remove_last_folder(path_to_self);
     
-    String_Const_u8 test_file_name = push_u8_stringf(arena, "%.*s/languages/4coder_lexer_cpp_test.cpp",
+    String_Const_u8 test_file_name = push_u8_stringf(arena, "%.*s/languages/4coder_cpp_lexer_test.cpp",
                                                      string_expand(path_to_src));
     
     FILE *test_file = fopen((char*)test_file_name.str, "rb");

@@ -163,6 +163,8 @@ api(custom) function Vec2_f32 draw_string_oriented(Application_Links* app, Face_
 api(custom) function f32 get_string_advance(Application_Links* app, Face_ID font_id, String_Const_u8 str);
 api(custom) function void draw_rectangle(Application_Links* app, Rect_f32 rect, f32 roundness, ARGB_Color color);
 api(custom) function void draw_rectangle_outline(Application_Links* app, Rect_f32 rect, f32 roundness, f32 thickness, ARGB_Color color);
+api(custom) function void draw_rectangle_outline_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
+api(custom) function void draw_rectangle_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
 api(custom) function Rect_f32 draw_set_clip(Application_Links* app, Rect_f32 new_clip);
 api(custom) function Text_Layout_ID text_layout_create(Application_Links* app, Buffer_ID buffer_id, Rect_f32 rect, Buffer_Point buffer_point);
 api(custom) function Rect_f32 text_layout_region(Application_Links* app, Text_Layout_ID text_layout_id);

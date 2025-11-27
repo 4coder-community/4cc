@@ -36,6 +36,8 @@ jobs:
     needs: build_4cc
     name: Upload Rolling Release
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
     - name: checkout
       uses: actions/checkout@v4

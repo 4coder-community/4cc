@@ -43,6 +43,9 @@ jobs:
       run: gh release create latest --repo ${{ github.repository }} --title "Latest" || echo "Release 'latest' already exists, continuing..."
     - name: Download 4cc Artifacts
       uses: actions/download-artifact@v4
+      with:
+        path: artifacts_dir
+        pattern: 4cc-*
     - run: |
         cd artifacts_dir
         for f in ./* ; do zip -r "$f.zip" $f ; done;

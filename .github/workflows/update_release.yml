@@ -14,12 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - suffix: x64-win-dx11
+        - suffix: x64-win
           os: windows-latest
-          build_cmd: bin\package.bat /DWIN32_DX11
-        - suffix: x64-win-gl
-          os: windows-latest
-          build_cmd: bin\package.bat /DWIN32_OPENGL
+          build_cmd: bin\package.bat
         - suffix: x64-linux
           os: ubuntu-latest
           build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./bin/package-linux.sh

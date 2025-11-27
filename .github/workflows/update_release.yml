@@ -12,44 +12,34 @@ jobs:
   build_4cc:
     uses: ./.github/workflows/build.yml
 
-  create_gh_release:
-    if: github.ref_type == 'tag'
+  publish_release:
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest_rolling_release'
     needs: build_4cc
-    name: Upload
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download 4cc Artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts_dir
-        pattern: 4cc-*
-    - run: |
-        cd artifacts_dir
-        for f in ./* ; do zip -r "$f.zip" $f ; done;
-    - name: Upload Artifacts to Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: artifacts_dir/4cc-*.zip
-  
-  latest: 
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest_rolling_release'
-    needs: build_4cc
-    name: Upload Rolling Release
+    name: Upload Release
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+      RELEASE_TITLE: ${{ github.ref_type == 'tag' && github.ref_name || 'Latest' }}
+      
     steps:
-    - name: checkout
+    - name: Checkout
       uses: actions/checkout@v4
-    - name: release
-      run: gh release create latest --repo ${{ github.repository }} --title "Latest" || echo "Release 'latest' already exists, continuing..."
+    - name: Create Release Exists
+      run: |
+        if ! gh release view "$RELEASE_NAME" --repo "${{ github.repository }}"; then
+          gh release create "$RELEASE_NAME" --repo "${{ github.repository }}" --title "$RELEASE_TITLE" --notes " "
+        fi
+
     - name: Download 4cc Artifacts
       uses: actions/download-artifact@v4
       with:
         path: artifacts_dir
         pattern: 4cc-*
+
     - run: |
         cd artifacts_dir
         for f in ./* ; do zip -r "$f.zip" $f ; done;
-    - name: Upload Artifacts to Release
-      run: gh release upload latest artifacts_dir/4cc-*.zip --repo ${{ github.repository }} --clobber
+
+    - name: Upload to Release
+      run: gh release upload "$RELEASE_NAME" artifacts_dir/4cc-*.zip --repo "${{ github.repository }}" --clobber

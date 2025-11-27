@@ -19,7 +19,7 @@ jobs:
           os: ubuntu-latest
           build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./bin/package-linux.sh
         - suffix: x64-mac
-          os: macos-13
+          os: macos-15-intel
           build_cmd: ./bin/package-mac.sh
 #       - suffix: arm64-mac
 #         os: macos-latest

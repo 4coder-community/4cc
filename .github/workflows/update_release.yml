@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - latest_rolling_release
     tags:
       - v*
 
@@ -13,7 +12,7 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   publish_release:
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest_rolling_release'
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master'
     needs: build_4cc
     name: Upload Release
     runs-on: ubuntu-latest

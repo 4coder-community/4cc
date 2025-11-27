@@ -1,0 +1,10 @@
+name: PR Build 4cc
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_4cc:
+    uses: ./.github/workflows/build.yml

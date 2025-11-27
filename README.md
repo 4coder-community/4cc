@@ -1,6 +1,4 @@
-# 4Coder Community
-
-Welcome to the 4coder community repository.
+# 4coder Community [![badge](https://github.com/4coder-community/4cc/actions/workflows/update_release.yml/badge.svg)](https://github.com/4coder-community/4cc/releases/)
 
 # Building
 

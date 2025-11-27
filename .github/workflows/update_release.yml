@@ -1,9 +1,10 @@
-name: Upload 4cc
+name: Download
 
 on:
   push:
     branches:
       - master
+      - latest_rolling_release
     tags:
       - v*
 
@@ -29,3 +30,21 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         files: artifacts_dir/4cc-*.zip
+  
+  latest: 
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/latest_rolling_release'
+    needs: build_4cc
+    name: Upload Rolling Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: release
+      run: gh release create latest --repo ${{ github.repository }} --title "Latest" || echo "Release 'latest' already exists, continuing..."
+    - name: Download 4cc Artifacts
+      uses: actions/download-artifact@v4
+    - run: |
+        cd artifacts_dir
+        for f in ./* ; do zip -r "$f.zip" $f ; done;
+    - name: Upload Artifacts to Release
+      run: gh release upload latest artifacts_dir/4cc-*.zip --repo ${{ github.repository }} --clobber

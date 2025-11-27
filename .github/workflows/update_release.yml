@@ -1,0 +1,61 @@
+name: Upload 4cc
+
+on:
+  push:
+    branches:
+      - release/4.1.8
+    tags:
+      - 'v4.1.8'
+
+jobs:
+  build_4cc:
+    name: Build 4cc
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - suffix: x64-win-dx11
+          os: windows-latest
+          build_cmd: bin\package.bat /DWIN32_DX11
+        - suffix: x64-win-gl
+          os: windows-latest
+          build_cmd: bin\package.bat /DWIN32_OPENGL
+        - suffix: x64-linux
+          os: ubuntu-latest
+          build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./bin/package-linux.sh
+        - suffix: x64-mac
+          os: macos-15-intel
+          build_cmd: ./bin/package-mac.sh
+#       - suffix: arm64-mac
+#         os: macos-latest
+#         build_cmd: ./bin/package_arm64-mac.sh
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ilammy/msvc-dev-cmd@v1.4.1  # this is a no-op on Linux and macOS
+    - name: Build 4cc-${{ matrix.suffix }}
+      run: cd code && ${{ matrix.build_cmd }} && cd ..
+    - name: Generate 4cc Artifacts
+      uses: actions/upload-artifact@v4.6.0
+      with:
+        name: 4cc-${{ matrix.suffix }}
+        path: current_dist_super_x64/4coder/  # having "x64" in path might have to change
+
+  create_gh_release:
+    if: github.ref_type == 'tag'
+    needs: build_4cc
+    name: Upload
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download 4cc Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts_dir
+        pattern: 4cc-*
+    - run: |
+        cd artifacts_dir
+        for f in ./* ; do zip -r "$f.zip" $f ; done;
+    - name: Upload Artifacts to Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts_dir/4cc-*.zip

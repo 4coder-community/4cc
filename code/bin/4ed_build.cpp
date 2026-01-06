@@ -97,7 +97,6 @@ char *arch_names[] = {
 //
 
 #define BUILD_DIR "../build"
-#define PACK_DIR "../distributions"
 #define SITE_DIR "../site"
 
 #define FOREIGN "../non-source/foreign"
@@ -526,16 +525,14 @@ get_4coder_dist_name(Arena *arena, u32 platform, u32 arch){
 }
 
 function void
-package_for_arch(Arena *arena, u32 arch, char *cdir, char *build_dir, char *pack_dir, char *current_dist, u32 flags, char** dist_files, i32 dist_file_count){
+package_for_arch(Arena *arena, u32 arch, char *cdir, char *build_dir, u32 flags, char** dist_files, i32 dist_file_count){
     char *arch_name  = arch_names[arch];
-    char *parent_dir = fm_str(arena, current_dist, "_", arch_name);
+    char *parent_dir = fm_str(arena, build_dir, SLASH, arch_name);
     char *dir        = fm_str(arena, parent_dir, SLASH "4coder");
-    char *zip_dir    = fm_str(arena, pack_dir, SLASH, "4coder_", arch_name);
+    char *zip_dir    = parent_dir;
     
     printf("\nBUILD: 4coder_%s\n", arch_name);
-    printf(" parent_dir = %s;\n", parent_dir);
     printf(" dir = %s;\n", dir);
-    printf(" zip_dir = %s;\n", zip_dir);
     fflush(stdout);
     
     { // build super
@@ -618,13 +615,11 @@ internal void
 package(Arena *arena, char *cdir, Arch_Code arch){
     // NOTE(allen): meta
     char *build_dir = fm_str(arena, BUILD_DIR);
-    char *pack_dir = fm_str(arena, PACK_DIR);
     char *dist_files[2];
     dist_files[0] = fm_str(arena, "../non-source/dist_files");
     dist_files[1] = fm_str(arena, "ship_files");
     
     printf("build dir: %s\n", build_dir);
-    printf("pack dir: %s\n", pack_dir);
     printf("dist files: %s, %s\n", dist_files[0], dist_files[1]);
     fflush(stdout);
     
@@ -638,11 +633,8 @@ package(Arena *arena, char *cdir, Arch_Code arch){
 #endif
 #endif
     
-    fm_make_folder_if_missing(arena, pack_dir);
-    
     Temp_Memory temp = begin_temp(arena);
-    char *current_dist = fm_str(arena, ".." SLASH "current_dist");
-    package_for_arch(arena, arch, cdir, build_dir, pack_dir, current_dist, flags, dist_files, ArrayCount(dist_files));
+    package_for_arch(arena, arch, cdir, build_dir, flags, dist_files, ArrayCount(dist_files));
     end_temp(temp);
 }
 

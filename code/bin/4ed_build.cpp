@@ -498,20 +498,6 @@ build(Arena *arena, u32 flags, u32 arch, char *code_path, char *code_file, char 
     build(arena, flags, arch, code_path, code_files, out_path, out_file, defines, exports, inc_folders);
 }
 
-// https://stackoverflow.com/questions/152016/detecting-cpu-architecture-compile-time
-internal Arch_Code
-get_architecture() {
-    #if defined(__x86_64__) || defined(_M_X64)
-        return Arch_X64;
-    #elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
-        return Arch_X86;
-    #elif defined(__aarch64__) || defined(_M_ARM64)
-        return Arch_arm64;
-    #else
-        #error Unknown architecture
-    #endif
-}
-
 function void
 dispatch_build(Arena *arena, u32 arch, char *cwd, u32 flags, char** dist_files, i32 dist_file_count){
     Temp_Dir temp = fm_pushdir(fm_str(arena, BUILD_DIR));
@@ -533,7 +519,7 @@ dispatch_build(Arena *arena, u32 arch, char *cwd, u32 flags, char** dist_files, 
     }
     char *build_script = fm_str(arena, "custom/bin/buildsuper_", arch_names[arch], build_script_postfix, BAT);
     
-    char *build_command = fm_str(arena, "\"", cwd, "/", build_script, "\" \"", default_custom_target, "\"");
+    char *build_command = fm_str(arena, "\"", cwd, SLASH, build_script, "\" \"", default_custom_target, "\"");
     if (This_OS == Platform_Windows){
         build_command = fm_str(arena, "call ", build_command);
     }
@@ -574,7 +560,14 @@ int main(int argc, char **argv){
     Assert(n < sizeof(cwd));
     
     u32 flags = 0;
-    u32 arch = get_architecture();
+
+#if ARCH_X86 
+    u32 arch = Arch_X86;
+#elif ARCH_X64
+    u32 arch = Arch_X64;
+#elif ARCH_ARM64
+    u32 arch = Arch_arm64;
+#endif
 
 #if defined(DEV_BUILD)
     flags |= DEBUG_INFO | INTERNAL;

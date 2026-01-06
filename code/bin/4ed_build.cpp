@@ -61,6 +61,7 @@ typedef u32 Arch_Code;
 enum{
     Arch_X64,
     Arch_X86,
+    Arch_arm64,
     
     //
     Arch_COUNT,
@@ -70,6 +71,7 @@ enum{
 char *arch_names[] = {
     "x64",
     "x86",
+    "arm64",
 };
 
 #if OS_WINDOWS
@@ -96,13 +98,12 @@ char *arch_names[] = {
 // Universal directories
 //
 
-#define BUILD_DIR "../build"
-#define SITE_DIR "../site"
+#define BUILD_DIR ".." SLASH "build"
+#define SITE_DIR ".." SLASH "site"
 
-#define FOREIGN "../non-source/foreign"
-#define FOREIGN_WIN "..\\non-source\\foreign"
+#define FOREIGN ".." SLASH "non-source" SLASH "foreign"
 
-char *includes[] = { "custom", FOREIGN "/freetype2", 0, };
+char *includes[] = { "custom", FOREIGN SLASH "freetype2", 0, };
 
 //
 // Platform layer file tables
@@ -129,7 +130,7 @@ char **platform_includes[Platform_COUNT][Compiler_COUNT] = {
     {0                      , 0                     , mac_clang_platform_inc},
 };
 
-char *default_custom_target = "../code/custom/4coder_default_bindings.cpp";
+char *default_custom_target = ".." SLASH "code" SLASH "custom" SLASH "4coder_default_bindings.cpp";
 
 // NOTE(allen): Build flags
 
@@ -187,8 +188,8 @@ get_defines_from_flags(Arena *arena, u32 flags){
 #define CL_LIBS_BACKEND " OpenGL32.lib"
 #endif
 
-#define CL_LIBS_X64 CL_LIBS_COMMON FOREIGN_WIN "\\x64\\freetype.lib" CL_LIBS_BACKEND
-#define CL_LIBS_X86 CL_LIBS_COMMON FOREIGN_WIN "\\x86\\freetype.lib" CL_LIBS_BACKEND
+#define CL_LIBS_X64 CL_LIBS_COMMON FOREIGN "\\x64\\freetype.lib" CL_LIBS_BACKEND
+#define CL_LIBS_X86 CL_LIBS_COMMON FOREIGN "\\x86\\freetype.lib" CL_LIBS_BACKEND
 
 #define CL_ICON "..\\non-source\\res\\icon.res"
 
@@ -497,177 +498,117 @@ build(Arena *arena, u32 flags, u32 arch, char *code_path, char *code_file, char 
     build(arena, flags, arch, code_path, code_files, out_path, out_file, defines, exports, inc_folders);
 }
 
-internal void
-build_and_run(Arena *arena, char *cdir, char *filename, char *name, u32 flags){
-    char *dir = fm_str(arena, BUILD_DIR);
-    
-    {
-        char *file = fm_str(arena, filename);
-        build(arena, flags, Arch_X64, cdir, file, dir, name, get_defines_from_flags(arena, flags), 0, includes);
-    }
-    
-    if (prev_error == 0){
-        char *cmd = fm_str(arena, dir, "/", name);
-        fm_execute_in_dir(cdir, cmd, 0);
-    }
-}
-
-internal char*
-get_4coder_dist_name(Arena *arena, u32 platform, u32 arch){
-    char *name = fm_str(arena, "4coder-" MAJOR_STR "-" MINOR_STR "-" PATCH_STR);
-    if (platform != Platform_None){
-        name = fm_str(arena, name, "-", platform_names[platform]);
-    }
-    if (arch != Arch_None){
-        name = fm_str(arena, name, "-", arch_names[arch]);
-    }
-    return(name);
+// https://stackoverflow.com/questions/152016/detecting-cpu-architecture-compile-time
+internal Arch_Code
+get_architecture() {
+    #if defined(__x86_64__) || defined(_M_X64)
+        return Arch_X64;
+    #elif defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+        return Arch_X86;
+    #elif defined(__aarch64__) || defined(_M_ARM64)
+        return Arch_arm64;
+    #else
+        #error Unknown architecture
+    #endif
 }
 
 function void
-package_for_arch(Arena *arena, u32 arch, char *cdir, char *build_dir, u32 flags, char** dist_files, i32 dist_file_count){
-    char *arch_name  = arch_names[arch];
-    char *parent_dir = fm_str(arena, build_dir, SLASH, arch_name);
-    char *dir        = fm_str(arena, parent_dir, SLASH "4coder");
-    char *zip_dir    = parent_dir;
+dispatch_build(Arena *arena, u32 arch, char *cwd, u32 flags, char** dist_files, i32 dist_file_count){
+    Temp_Dir temp = fm_pushdir(fm_str(arena, BUILD_DIR));
     
-    printf("\nBUILD: 4coder_%s\n", arch_name);
-    printf(" dir = %s;\n", dir);
+    char *build_script_postfix = "";
+    switch (This_OS){
+        case Platform_Windows:
+        {
+            build_script_postfix = "-win";
+        }break;
+        case Platform_Linux:
+        {
+            build_script_postfix = "-linux";
+        }break;
+        case Platform_Mac:
+        {
+            build_script_postfix = "-mac";
+        }break;
+    }
+    char *build_script = fm_str(arena, "custom/bin/buildsuper_", arch_names[arch], build_script_postfix, BAT);
+    
+    char *build_command = fm_str(arena, "\"", cwd, "/", build_script, "\" \"", default_custom_target, "\"");
+    if (This_OS == Platform_Windows){
+        build_command = fm_str(arena, "call ", build_command);
+    }
+
+    systemf("%s", build_command);
+    
+    fm_popdir(temp);
     fflush(stdout);
-    
-    { // build super
-        char* file = fm_str(arena, default_custom_target);
 
-        printf(" cdir = %s;\n file = %s;\n arch = %s;\n", cdir, file, arch_names[arch]);
-        fflush(stdout);
-        
-        Temp_Dir temp = fm_pushdir(fm_str(arena, BUILD_DIR));
-        
-        char *build_script_postfix = "";
-        switch (This_OS){
-            case Platform_Windows:
-            {
-                build_script_postfix = "-win";
-            }break;
-            case Platform_Linux:
-            {
-                build_script_postfix = "-linux";
-            }break;
-            case Platform_Mac:
-            {
-                build_script_postfix = "-mac";
-            }break;
-        }
-        char *build_script = fm_str(arena, "custom/bin/buildsuper_", arch_names[arch], build_script_postfix, BAT);
-        
-        char *build_command = fm_str(arena, "\"", cdir, "/", build_script, "\" \"", file, "\"");
-        if (This_OS == Platform_Windows){
-            build_command = fm_str(arena, "call ", build_command);
-        }
-        systemf("%s", build_command);
-        
-        fm_popdir(temp);
-        fflush(stdout);
-    }
-
-    { // build main
-        {
-            char *file = fm_str(arena, "4ed_app_target.cpp");
-            char **exports = fm_list_one_item(arena, "app_get_functions");
-            
-            char **build_includes = includes;
-            
-            build(arena, OPTS | SHARED_CODE | flags, arch, cdir, file, build_dir, "4ed_app" DLL, get_defines_from_flags(arena, flags), exports, build_includes);
-        }
-        
-        {
-            char **inc = (char**)fm_list(arena, includes, platform_includes[This_OS][This_Compiler]);
-            build(arena, OPTS | LIBS | ICON | flags, arch, cdir, platform_layers[This_OS], build_dir, "4ed", get_defines_from_flags(arena, flags), 0, inc);
-        }
-        
-        fflush(stdout);
+    {
+        char *file = fm_str(arena, "4ed_app_target.cpp");
+        char **exports = fm_list_one_item(arena, "app_get_functions");
+        build(arena, OPTS | SHARED_CODE | flags, arch, cwd, file, BUILD_DIR, "4ed_app" DLL, get_defines_from_flags(arena, flags), exports, includes);
     }
     
-    fm_clear_folder(parent_dir);
-    fm_make_folder_if_missing(arena, parent_dir);
+    {
+        char **inc = (char**)fm_list(arena, includes, platform_includes[This_OS][This_Compiler]);
+        build(arena, OPTS | LIBS | ICON | flags, arch, cwd, platform_layers[This_OS], BUILD_DIR, "4ed", get_defines_from_flags(arena, flags), 0, inc);
+    }
     
-    fm_make_folder_if_missing(arena, dir);
-    fm_copy_file(fm_str(arena, build_dir, "/4ed" EXE), fm_str(arena, dir, "/4ed" EXE));
-    fm_copy_file(fm_str(arena, build_dir, "/4ed_app" DLL), fm_str(arena, dir, "/4ed_app" DLL));
-    fm_copy_file(fm_str(arena, build_dir, "/custom_4coder" DLL), fm_str(arena, dir, "/custom_4coder" DLL));
+    fflush(stdout);
     
     for (i32 j = 0; j < dist_file_count; j += 1){
-        fm_copy_all(dist_files[j], dir);
+        fm_copy_all(dist_files[j], BUILD_DIR);
     }
     
-    char *custom_src_dir = fm_str(arena, cdir, SLASH, "custom");
-    char *custom_dst_dir = fm_str(arena, dir, SLASH, "custom");
+    char *custom_src_dir = fm_str(arena, cwd, SLASH, "custom");
+    char *custom_dst_dir = fm_str(arena, BUILD_DIR, SLASH, "custom");
     fm_make_folder_if_missing(arena, custom_dst_dir);
     fm_copy_all(custom_src_dir, custom_dst_dir);
-    
-    char *dist_name = get_4coder_dist_name(arena, This_OS, arch);
-    char *zip_name = fm_str(arena, zip_dir, SLASH, dist_name, ".zip");
-    fm_make_folder_if_missing(arena, zip_dir);
-    fm_zip(parent_dir, "4coder", zip_name);
-}
-
-internal void
-package(Arena *arena, char *cdir, Arch_Code arch){
-    // NOTE(allen): meta
-    char *build_dir = fm_str(arena, BUILD_DIR);
-    char *dist_files[2];
-    dist_files[0] = fm_str(arena, "../non-source/dist_files");
-    dist_files[1] = fm_str(arena, "ship_files");
-    
-    printf("build dir: %s\n", build_dir);
-    printf("dist files: %s, %s\n", dist_files[0], dist_files[1]);
-    fflush(stdout);
-    
-    u32 flags = SHIP | DEBUG_INFO | OPTIMIZATION;
-    
-#if OS_WINDOWS
-#if defined( WIN32_DX11 )
-    flags |= DX11;
-#else
-    flags |= OPENGL;
-#endif
-#endif
-    
-    Temp_Memory temp = begin_temp(arena);
-    package_for_arch(arena, arch, cdir, build_dir, flags, dist_files, ArrayCount(dist_files));
-    end_temp(temp);
 }
 
 int main(int argc, char **argv){
     Arena arena = fm_init_system(DetailLevel_FileOperations);
     
-    char cdir[256];
-    i32 n = fm_get_current_directory(cdir, sizeof(cdir));
-    Assert(n < sizeof(cdir));
+    char cwd[256];
+    i32 n = fm_get_current_directory(cwd, sizeof(cwd));
+    Assert(n < sizeof(cwd));
     
-    u32 flags = SUPER;
-    u32 arch = Arch_X64;
-#if defined(DEV_BUILD) || defined(DEV_BUILD_X86)
+    u32 flags = 0;
+    u32 arch = get_architecture();
+
+#if defined(DEV_BUILD)
     flags |= DEBUG_INFO | INTERNAL;
 #endif
-#if defined(OPT_BUILD) || defined(OPT_BUILD_X86)
-    flags |= OPTIMIZATION;
+
+#if defined(OPT_BUILD)
+    flags |= OPTIMIZATION | SHIP;
 #endif
+
 #if OS_WINDOWS
-#if defined(WIN32_DX11)
-    flags |= DX11;
-#else
-    flags |= OPENGL;
+    #if defined(WIN32_DX11)
+        flags |= DX11;
+    #else
+        flags |= OPENGL;
+    #endif
 #endif
-#endif
-#if defined(DEV_BUILD_X86) || defined(OPT_BUILD_X86)
-    arch = Arch_X86;
-#endif
+
+    // NOTE(allen): meta
+    char *dist_files[] = {
+        fm_str(&arena, "../non-source/dist_files"),
+        fm_str(&arena, "ship_files"),
+    };
     
-    package(&arena, cdir, arch);
+    printf("cwd: %s\n", cwd);
+    printf("BUILD: 4coder\n");
+    printf(" arch: %s\n", arch_names[arch]);
+    printf(" build dir: %s\n", BUILD_DIR);
+    fflush(stdout);
+    
+    Temp_Memory temp = begin_temp(&arena);
+    dispatch_build(&arena, arch, cwd, flags, dist_files, ArrayCount(dist_files));
+    end_temp(temp);
     
     return(error_state);
 }
 
 // BOTTOM
-

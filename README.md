@@ -6,10 +6,7 @@
 1. Setup the MSVC toolchain in your environment, this can be done with the `code/custom/bin/setup_cl_x64.bat` script
 2. call the `package.bat` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
    1. `$ cd 4cc\code`
-   2. `.\bin\package.bat`
-3. You can also use the `build.bat` script if you want just build the binaries (this produces the build artifacts in the `build` directory, this doesn't produce a functional distribution)
-   1. `$ cd 4cc\code`
-   2. `$ .\bin\build.bat`
+   2. `.\bin\build.bat`
 
 In addition to the parameter listed below, you can specify which backend to use by passing one of those parameters to the build scripts:
 - `/DWIN32_OPENGL` (default) to use the OpenGL backend.
@@ -22,10 +19,6 @@ In addition to the parameter listed below, you can specify which backend to use 
     - `$ sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev`
 2. Use the `package-linux.sh` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
    1. `$ cd 4cc/code`
-   2. `$ ./bin/package-linux.sh`
-
-3. You can also use the `build-linux.sh` script if you want just build the binaries, (this produces the build artifacts in the `build` directory, this doesn't produce a functional distribution)
-   1. `$ cd 4cc/code`
    2. `$ ./bin/build-linux.sh`
 
 ## Mac 
@@ -34,11 +27,7 @@ In addition to the parameter listed below, you can specify which backend to use 
 
 1. Use the `package-mac.sh` script from the code directory (this builds a distribution in the `distributions` directory with all the non-binary dependencies)
    1. `$ cd 4cc/code`
-   2. `$ ./bin/package-mac.sh` 
-
-2. You can also use the `build-mac.sh` script if you want just build the binaries, (this produces the build artifacts in the `build` directory, this doesn't produce a functional distribution)
-   1. `$ cd 4cc/code`
-   2. `$ ./bin/build-mac.sh`
+   2. `$ ./bin/build-mac.sh` 
 
 ### Older Macs, 10.15.7 Catalina
 

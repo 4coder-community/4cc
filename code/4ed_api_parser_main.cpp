@@ -38,7 +38,7 @@ main(int argc, char **argv){
     }
     
     String_Const_u8 exe = SCu8("code/4ed_api_parser_main.exe");
-    u64 command_line_length = exe.size;
+    u32 command_line_length = exe.size;
     
     for (i32 i = 1; i < argc; i+=1){
         command_line_length += 1 + cstring_length(argv[i]);

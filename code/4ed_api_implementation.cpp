@@ -2898,32 +2898,6 @@ draw_rectangle_outline(Application_Links *app, Rect_f32 rect, f32 roundness, f32
     }
 }
 
-api(custom) function void
-draw_rectangle_outline_corner_parameters(Application_Links *app, Rect_f32 rect,
-                                         f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1,
-                                         f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1,
-                                         u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1){
-    Models *models = (Models*)app->cmd_context;
-    if (models->in_render_mode){
-        draw_rectangle_outline_corner_parameters(models->target, rect,
-                                                 roundness_x0y0, roundness_x1y0, roundness_x0y1, roundness_x1y1,
-                                                 thickness_x0y0, thickness_x1y0, thickness_x0y1, thickness_x1y1,
-                                                 color_x0y0, color_x1y0, color_x0y1, color_x1y1);
-    }
-}
-
-api(custom) function void
-draw_rectangle_corner_parameters(Application_Links *app, Rect_f32 rect,
-                                 f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1,
-                                 u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1){
-    Models *models = (Models*)app->cmd_context;
-    if (models->in_render_mode){
-        draw_rectangle_corner_parameters(models->target, rect,
-                                         roundness_x0y0, roundness_x1y0, roundness_x0y1, roundness_x1y1,
-                                         color_x0y0, color_x1y0, color_x0y1, color_x1y1);
-    }
-}
-
 api(custom) function Rect_f32
 draw_set_clip(Application_Links *app, Rect_f32 new_clip){
     Models *models = (Models*)app->cmd_context;

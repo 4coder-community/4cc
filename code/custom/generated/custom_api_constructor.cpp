@@ -947,36 +947,6 @@ custom_api_construct(Arena *arena){
         api_param(arena, call, "ARGB_Color", "color");
     }
     {
-        API_Call *call = api_call_with_location(arena, result, string_u8_litexpr("draw_rectangle_outline_corner_parameters"), string_u8_litexpr("void"), string_u8_litexpr(""));
-        api_param(arena, call, "Application_Links*", "app");
-        api_param(arena, call, "Rect_f32", "rect");
-        api_param(arena, call, "f32", "roundness_x0y0");
-        api_param(arena, call, "f32", "roundness_x1y0");
-        api_param(arena, call, "f32", "roundness_x0y1");
-        api_param(arena, call, "f32", "roundness_x1y1");
-        api_param(arena, call, "f32", "thickness_x0y0");
-        api_param(arena, call, "f32", "thickness_x1y0");
-        api_param(arena, call, "f32", "thickness_x0y1");
-        api_param(arena, call, "f32", "thickness_x1y1");
-        api_param(arena, call, "u32", "color_x0y0");
-        api_param(arena, call, "u32", "color_x1y0");
-        api_param(arena, call, "u32", "color_x0y1");
-        api_param(arena, call, "u32", "color_x1y1");
-    }
-    {
-        API_Call *call = api_call_with_location(arena, result, string_u8_litexpr("draw_rectangle_corner_parameters"), string_u8_litexpr("void"), string_u8_litexpr(""));
-        api_param(arena, call, "Application_Links*", "app");
-        api_param(arena, call, "Rect_f32", "rect");
-        api_param(arena, call, "f32", "roundness_x0y0");
-        api_param(arena, call, "f32", "roundness_x1y0");
-        api_param(arena, call, "f32", "roundness_x0y1");
-        api_param(arena, call, "f32", "roundness_x1y1");
-        api_param(arena, call, "u32", "color_x0y0");
-        api_param(arena, call, "u32", "color_x1y0");
-        api_param(arena, call, "u32", "color_x0y1");
-        api_param(arena, call, "u32", "color_x1y1");
-    }
-    {
         API_Call *call = api_call_with_location(arena, result, string_u8_litexpr("draw_set_clip"), string_u8_litexpr("Rect_f32"), string_u8_litexpr(""));
         api_param(arena, call, "Application_Links*", "app");
         api_param(arena, call, "Rect_f32", "new_clip");

@@ -524,6 +524,10 @@ dispatch_build(Arena *arena, u32 arch, char *cwd, u32 flags, char** dist_files, 
         build_command = fm_str(arena, "call ", build_command);
     }
 
+    if (flags & OPTIMIZATION) {
+        build_command = fm_str(arena, build_command, " release");
+    }
+
     systemf("%s", build_command);
     
     fm_popdir(temp);

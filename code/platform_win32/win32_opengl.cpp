@@ -158,6 +158,7 @@ win32_gl_create_window(HWND *wnd_out, HGLRC *context_out, DWORD style, RECT rect
         wndclass.style = CS_HREDRAW|CS_VREDRAW|CS_DBLCLKS;
         wndclass.lpfnWndProc = win32_proc;
         wndclass.hIcon = LoadIconW(GetModuleHandle(0), L"main");
+        wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
         wndclass.hInstance = this_instance;
         wndclass.lpszClassName = L"GRAPHICS-WINDOW-NAME";
         if (RegisterClassW(&wndclass) == 0){

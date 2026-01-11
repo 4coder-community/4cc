@@ -99,8 +99,8 @@
 //#include <fontconfig/fontconfig.h>
 #define internal static
 
-#include <GL/glx.h>
-#include <GL/glext.h>
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 #ifdef INSO_DEBUG
 #define LINUX_FN_DEBUG(fmt, ...) do { \
@@ -221,6 +221,13 @@ struct Linux_Vars {
     Atom atom_WM_DELETE_WINDOW;
     
     Log_Function *log_string;
+    
+    struct
+    {
+        EGLDisplay display;
+        EGLContext context;
+        EGLSurface surface;
+    } egl;
 };
 
 global Linux_Vars linuxvars;
@@ -622,123 +629,94 @@ font_make_face(Arena* arena, Face_Description* description, f32 scale_factor) {
 ////////////////////////////
 
 internal b32
-glx_init(void) {
-    int glx_maj, glx_min;
+egl_init(void) {
+    b32 result = false;
     
-    if(!glXQueryVersion(linuxvars.dpy, &glx_maj, &glx_min)) {
-        return false;
+    linuxvars.egl.display = eglGetPlatformDisplay(EGL_PLATFORM_X11_KHR, linuxvars.dpy, 0);
+    if(linuxvars.egl.display !=  EGL_NO_DISPLAY) {
+        int egl_maj = 0;
+        int egl_min = 0;
+        if(eglInitialize(linuxvars.egl.display, &egl_maj, &egl_min) == EGL_TRUE) {
+            if((egl_maj > 1) || (egl_maj == 1 && egl_min >= 5)) {
+                eglBindAPI(EGL_OPENGL_API);
+                EGLint ContextAttributes[] = {
+                    EGL_CONTEXT_MAJOR_VERSION, 3,
+                    EGL_CONTEXT_MINOR_VERSION, 2,
+                    EGL_CONTEXT_OPENGL_PROFILE_MASK, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT,
+#if GL_DEBUG_MODE
+                    EGL_CONTEXT_OPENGL_DEBUG
+#endif
+                    EGL_NONE,
+                };
+                
+                linuxvars.egl.context = eglCreateContext(linuxvars.egl.display, EGL_NO_CONFIG_KHR, EGL_NO_CONTEXT, ContextAttributes);
+                
+                if(linuxvars.egl.context != EGL_NO_CONTEXT) {
+                    
+#define GL_FUNC(f,R,P) f = (f##_Function *)eglGetProcAddress(#f);
+#include "opengl/4ed_opengl_funcs.h"
+                    
+                    result = true;
+                }
+            }
+        }
     }
     
-    return glx_maj > 1 || (glx_maj == 1 && glx_min >= 3);
+    return result;
 }
 
 internal b32
-glx_get_config(GLXFBConfig* fb_config, XVisualInfo* vi) {
+egl_create_surface(void) {
+    b32 result = false;
     
-    static const int attrs[] = {
-        GLX_X_RENDERABLE , True,
-        GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT,
-        GLX_RENDER_TYPE  , GLX_RGBA_BIT,
-        GLX_X_VISUAL_TYPE, GLX_TRUE_COLOR,
-        GLX_RED_SIZE     , 8,
-        GLX_GREEN_SIZE   , 8,
-        GLX_BLUE_SIZE    , 8,
-        GLX_ALPHA_SIZE   , 8,
-        GLX_DEPTH_SIZE   , 24,
-        GLX_STENCIL_SIZE , 8,
-        GLX_DOUBLEBUFFER , True,
-        None
+    Scratch_Block scratch(&linuxvars.tctx);
+    
+    EGLint config_attributes[] = {
+        EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
+        EGL_CONFORMANT, EGL_OPENGL_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+        
+        EGL_RED_SIZE, 8,
+        EGL_GREEN_SIZE, 8,
+        EGL_BLUE_SIZE, 8,
+        EGL_ALPHA_SIZE, 8,
+        
+        EGL_DEPTH_SIZE, 24,
+        EGL_STENCIL_SIZE, 8,
+        
+        EGL_NONE,
     };
     
-    int conf_count = 0;
-    GLXFBConfig* conf_list = glXChooseFBConfig(linuxvars.dpy, DefaultScreen(linuxvars.dpy), attrs, &conf_count);
-    if(!conf_count || conf_count <= 0) {
-        return false;
-    }
-    
-    *fb_config = *conf_list;
-    XFree(conf_list);
-    
-    XVisualInfo* xvi = glXGetVisualFromFBConfig(linuxvars.dpy, *fb_config);
-    if(!xvi) {
-        return false;
-    }
-    
-    *vi = *xvi;
-    XFree(xvi);
-    
-    return true;
-}
-
-internal b32 glx_ctx_error;
-
-internal int
-glx_error_handler(Display* dpy, XErrorEvent* ev){
-    glx_ctx_error = true;
-    return 0;
-}
-
-typedef GLXContext (glXCreateContextAttribsARB_Function)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
-typedef void       (glXSwapIntervalEXT_Function)        (Display *dpy, GLXDrawable drawable, int interval);
-typedef int        (glXSwapIntervalMESA_Function)       (unsigned int interval);
-typedef int        (glXGetSwapIntervalMESA_Function)    (void);
-typedef int        (glXSwapIntervalSGI_Function)        (int interval);
-
-internal b32
-glx_create_context(GLXFBConfig fb_config){
-    const char *glx_exts = glXQueryExtensionsString(linuxvars.dpy, DefaultScreen(linuxvars.dpy));
-    
-    glXCreateContextAttribsARB_Function *glXCreateContextAttribsARB = 0;
-    glXSwapIntervalEXT_Function         *glXSwapIntervalEXT = 0;
-    glXSwapIntervalMESA_Function        *glXSwapIntervalMESA = 0;
-    glXGetSwapIntervalMESA_Function     *glXGetSwapIntervalMESA = 0;
-    glXSwapIntervalSGI_Function         *glXSwapIntervalSGI = 0;
-    
-#define GLXLOAD(f) f = (f##_Function*) glXGetProcAddressARB((const GLubyte*) #f);
-    GLXLOAD(glXCreateContextAttribsARB);
-    
-    GLXContext ctx = NULL;
-    int (*old_handler)(Display*, XErrorEvent*) = XSetErrorHandler(&glx_error_handler);
-    
-    if (glXCreateContextAttribsARB == NULL){
-        //LOG("glXCreateContextAttribsARB() not found, using old-style GLX context\n" );
-        ctx = glXCreateNewContext(linuxvars.dpy, fb_config, GLX_RGBA_TYPE, 0, True);
-    } else {
-        static const int context_attribs[] = {
-            GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-            GLX_CONTEXT_MINOR_VERSION_ARB, 2,
-            GLX_CONTEXT_PROFILE_MASK_ARB , GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
-#if GL_DEBUG_MODE
-            GLX_CONTEXT_FLAGS_ARB        , GLX_CONTEXT_DEBUG_BIT_ARB,
-#endif
-            None
-        };
+    EGLAttrib surface_attributes[] = {
+        EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_SRGB,
+        EGL_RENDER_BUFFER, EGL_BACK_BUFFER,
         
-        ctx = glXCreateContextAttribsARB(linuxvars.dpy, fb_config, 0, True, context_attribs);
+        // NOTE(maria): for wayland later
+        //EGL_PRESENT_OPAQUE_EXT, EGL_TRUE,
+        
+        EGL_NONE,
+    };
+    
+    EGLint config_count = 0;
+    eglChooseConfig(linuxvars.egl.display, config_attributes, 0, 0, &config_count);
+    
+    EGLConfig *configs = push_array(scratch, EGLConfig, config_count);
+    eglChooseConfig(linuxvars.egl.display, config_attributes, configs, config_count, &config_count);
+    
+    for(int config_index = 0;
+        config_index < config_count;
+        ++config_index) {
+        EGLConfig test_config = configs[config_index];
+        EGLSurface test_surface = eglCreatePlatformWindowSurface(linuxvars.egl.display, test_config, &linuxvars.win, surface_attributes);
+        if(test_surface != EGL_NO_SURFACE) {
+            linuxvars.egl.surface = test_surface;
+            result = true;
+            break;
+        }
     }
     
-    XSync(linuxvars.dpy, False);
-    if(glx_ctx_error || !ctx) {
-        return false;
-    }
-    
-    XSync(linuxvars.dpy, False);
-    XSetErrorHandler(old_handler);
-    
-    //b32 direct = glXIsDirect(linuxvars.dpy, ctx);
-    
-    //LOG("Making context current\n");
-    glXMakeCurrent(linuxvars.dpy, linuxvars.win, ctx);
-    
-    //glx_enable_vsync();
-    
-    // NOTE(allen): Load gl functions
-#define GL_FUNC(f,R,P) GLXLOAD(f)
-#include "opengl/4ed_opengl_funcs.h"
-    
-#undef GLXLOAD
-    
-    return true;
+    return result;
 }
 
 ////////////////////////////
@@ -771,14 +749,8 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
     
 #undef LOAD_ATOM
     
-    if (!glx_init()){
-        system_error_box("Your XServer's GLX version is too old. GLX 1.3+ is required.");
-    }
-    
-    GLXFBConfig fb_config;
-    XVisualInfo vi;
-    if (!glx_get_config(&fb_config, &vi)){
-        system_error_box("Could not get a matching GLX FBConfig. Check your OpenGL drivers are installed correctly.");
+    if (!egl_init()){
+        system_error_box("Your EGL version is too old. EGL 1.5+ is required.");
     }
     
     // TODO: window size
@@ -795,10 +767,9 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
     swa.backing_store = WhenMapped;
     swa.event_mask = StructureNotifyMask;
     swa.bit_gravity = NorthWestGravity;
-    swa.colormap = XCreateColormap(dpy, RootWindow(dpy, vi.screen), vi.visual, AllocNone);
     
     u32 CWflags = CWBackingStore|CWBitGravity|CWBackPixel|CWBorderPixel|CWColormap|CWEventMask;
-    linuxvars.win = XCreateWindow(dpy, RootWindow(dpy, vi.screen), 0, 0, w, h, 0, vi.depth, InputOutput, vi.visual, CWflags, &swa);
+    linuxvars.win = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0, w, h, 0, CopyFromParent, InputOutput, CopyFromParent, CWflags, &swa);
     
     if (!linuxvars.win){
         system_error_box("XCreateWindow failed. Make sure your display is set up correctly.");
@@ -855,9 +826,11 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
     // NOTE(inso): make the window visible
     XMapWindow(linuxvars.dpy, linuxvars.win);
     
-    if(!glx_create_context(fb_config)) {
-        system_error_box("Unable to create GLX context.");
+    if(!egl_create_surface()) {
+        system_error_box("Unable to create EGL surface.");
     }
+    
+    eglMakeCurrent(linuxvars.egl.display, linuxvars.egl.surface, linuxvars.egl.surface, linuxvars.egl.context);
     
     XRaiseWindow(linuxvars.dpy, linuxvars.win);
     
@@ -2019,7 +1992,7 @@ main(int argc, char **argv){
         }
         
         gl_render(&render_target);
-        glXSwapBuffers(linuxvars.dpy, linuxvars.win);
+        eglSwapBuffers(linuxvars.egl.display, linuxvars.egl.surface);
         
         // TODO(allen): don't let the screen size change until HERE after the render
         

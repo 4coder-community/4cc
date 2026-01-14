@@ -52,6 +52,7 @@ print_string_match_list_to_buffer(Application_Links *app, Buffer_ID out_buffer_i
     }
     
     end_buffer_insertion(&out);
+    lock_jump_buffer(app, out_buffer_id);
 }
 
 internal void

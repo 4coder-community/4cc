@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - develop
     tags:
       - v*
 
@@ -12,14 +13,14 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   publish_release:
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master'
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
     needs: build_4cc
     name: Upload Release
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
-      RELEASE_TITLE: ${{ github.ref_type == 'tag' && github.ref_name || 'Latest' }}
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || github.ref == 'refs/heads/develop' && 'unstable' || 'latest' }}
+      RELEASE_TITLE: ${{ github.ref_type == 'tag' && github.ref_name || github.ref == 'refs/heads/develop' && 'Unstable' || 'Latest' }}
       
     steps:
     - name: Checkout

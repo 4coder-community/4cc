@@ -209,6 +209,10 @@ struct Win32_Vars{
 
 global Win32_Vars win32vars;
 global Render_Target target;
+global App_Functions app;
+global void *base_ptr;
+global b32 keep_running;
+global u64 frame_useconds;
 
 ////////////////////////////////
 
@@ -1204,6 +1208,149 @@ system_condition_variable_free_sig(){
 
 //-
 
+internal VOID CALL_CONVENTION
+win32_step(HDC hdc, Arena *scratch){
+    system_acquire_global_frame_mutex(win32vars.tctx);
+    
+    // NOTE(allen): Mouse Out of Window Detection
+    b32 set_cursor = false;
+    POINT mouse_point;
+    if (GetCursorPos(&mouse_point) &&
+        ScreenToClient(win32vars.window_handle, &mouse_point)){
+        Rect_i32 screen = Ri32(0, 0, target.width, target.height);
+        Vec2_i32 mp = V2i32(mouse_point.x, mouse_point.y);
+        win32vars.input_chunk.trans.out_of_window = (!rect_contains_point(screen, mp));
+        win32vars.input_chunk.pers.mouse = mp;
+        
+        b32 x_inside = screen.x0+5 < mp.x && mp.x < screen.x1-5;
+        b32 y_inside = screen.y0+5 < mp.y && mp.y < screen.y1-5;
+        set_cursor = x_inside && y_inside;
+    }
+    else{
+        win32vars.input_chunk.trans.out_of_window = true;
+    }
+    
+    // NOTE(allen): Prepare the Frame Input
+    
+    // TODO(allen): CROSS REFERENCE WITH LINUX SPECIAL CODE "TIC898989"
+    Win32_Input_Chunk input_chunk = win32vars.input_chunk;
+    Application_Step_Input input = {};
+    
+    input.first_step = win32vars.first;
+    input.dt = frame_useconds/1000000.f;
+    input.events = input_chunk.trans.event_list;
+    
+    input.mouse.out_of_window = input_chunk.trans.out_of_window;
+    
+    input.mouse.l = input_chunk.pers.mouse_l;
+    input.mouse.press_l = input_chunk.trans.mouse_l_press;
+    input.mouse.release_l = input_chunk.trans.mouse_l_release;
+    
+    input.mouse.r = input_chunk.pers.mouse_r;
+    input.mouse.press_r = input_chunk.trans.mouse_r_press;
+    input.mouse.release_r = input_chunk.trans.mouse_r_release;
+    
+    input.mouse.wheel = input_chunk.trans.mouse_wheel;
+    input.mouse.p = input_chunk.pers.mouse;
+    
+    input.trying_to_kill = input_chunk.trans.trying_to_kill;
+    
+    // TODO(allen): Not really appropriate to round trip this all the way to the OS layer, redo this system.
+    // NOTE(allen): Ask the Core About Exiting if We Have an Exit Signal
+    if (win32vars.send_exit_signal){
+        input.trying_to_kill = true;
+        win32vars.send_exit_signal = false;
+    }
+    
+    // NOTE(allen): Frame Clipboard Input
+    if (win32vars.clip_catch_all){
+        input.clipboard = system_get_clipboard(scratch, 0);
+    }
+    
+    win32vars.clip_post.size = 0;
+    
+    
+    // NOTE(allen): Application Core Update
+    Application_Step_Result result = app.step(win32vars.tctx, &target, base_ptr, &input);
+    
+    // NOTE(allen): Finish the Loop
+    if (result.perform_kill){
+        keep_running = false;
+    }
+    
+    // NOTE(allen): Post New Clipboard Content
+    if (win32vars.clip_post.size > 0){
+        win32_post_clipboard(scratch, (char*)win32vars.clip_post.str, (i32)win32vars.clip_post.size);
+    }
+    
+    // NOTE(allen): Switch to New Title
+    if (result.has_new_title){
+        SetWindowText_utf8(scratch, win32vars.window_handle, (u8*)result.title_string);
+    }
+    
+    // NOTE(allen): Switch to New Cursor
+    if (set_cursor){
+        Win32SetCursorFromUpdate(result.mouse_cursor_type);
+    }
+    
+    if (win32vars.cursor_show != win32vars.prev_cursor_show){
+        win32vars.prev_cursor_show = win32vars.cursor_show;
+        switch (win32vars.cursor_show){
+            case MouseCursorShow_Never:
+            {
+                i32 counter = 0;
+                do{
+                    counter = ShowCursor(false);
+                }while(counter >= 0);
+            }break;
+            
+            case MouseCursorShow_Always:
+            {
+                i32 counter = 0;
+                do{
+                    counter = ShowCursor(true);
+                }while(counter <= 0);
+            }break;
+            
+            // TODO(allen): MouseCursorShow_HideWhenStill
+        }
+    }
+    
+    // NOTE(allen): update lctrl_lalt_is_altgr status
+    win32vars.lctrl_lalt_is_altgr = (b8)result.lctrl_lalt_is_altgr;
+    
+    // NOTE(allen): render
+#if defined( WIN32_DX11 )
+    gl_render(&target);
+    g_dx11.swap_chain->Present( 1, 0 );
+#else
+    gl_render(&target);
+    SwapBuffers(hdc);
+#endif
+    
+    // NOTE(allen): toggle full screen
+    if (win32vars.do_toggle){
+        win32_toggle_fullscreen();
+        win32vars.do_toggle = false;
+    }
+    
+    // NOTE(allen): schedule another step if needed
+    if (result.animating){
+        system_schedule_step(0);
+    }
+    else if (win32vars.clip_catch_all){
+        system_wake_up_timer_set(win32vars.clip_wakeup_timer, 250);
+    }
+
+    system_release_global_frame_mutex(win32vars.tctx);
+
+    linalloc_clear(&win32vars.frame_arena);
+    block_zero_struct(&win32vars.input_chunk.trans);
+    win32vars.active_key_stroke = 0;
+    win32vars.active_text_input = 0;
+    win32vars.first = false;
+}
+
 internal LRESULT CALL_CONVENTION
 win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
     LRESULT result = 0;
@@ -1456,10 +1603,12 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
         
         case WM_PAINT:
         {
-            win32vars.got_useful_event = true;
+            win32vars.got_useful_event = false;
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
             // NOTE(allen): Do nothing?
+            // NOTE(BYP): unless...
+            win32_step(hdc, scratch);
             EndPaint(hwnd, &ps);
         }break;
         
@@ -1497,6 +1646,10 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
         }break;
     }
     
+    if (win32vars.got_useful_event){
+        InvalidateRect(win32vars.window_handle, NULL, FALSE);
+    }
+
     return(result);
 }
 
@@ -1582,7 +1735,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     log_os("Loading 4ed core...\n");
     
     System_Library core_library = {};
-    App_Functions app = {};
     {
         App_Get_Functions *get_funcs = 0;
         Scratch_Block scratch(win32vars.tctx);
@@ -1623,7 +1775,6 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     log_os("Parsing command line...\n");
     
     Plat_Settings plat_settings = {};
-    void *base_ptr = 0;
     {
         Scratch_Block scratch(win32vars.tctx);
         String_Const_u8 curdir = system_get_path(scratch, SystemPath_CurrentDirectory);
@@ -1824,7 +1975,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     
     log_os("Starting main loop...\n");
     
-    b32 keep_running = true;
+    keep_running = true;
     win32vars.first = true;
     timeBeginPeriod(1);
     
@@ -1837,255 +1988,71 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     ShowWindow(win32vars.window_handle, SW_SHOW);
     
     //- @Added by jack
-    u64 frame_rate = win32_get_frame_rate();
-    u64 frame_useconds = (1000000 / frame_rate);
+    frame_useconds = (1000000 / win32_get_frame_rate());
     //-
     
     win32vars.global_frame_mutex = system_mutex_make();
-    system_acquire_global_frame_mutex(win32vars.tctx);
     
-    u64 timer_start = system_now_time();
     MSG msg;
-    for (;keep_running;){
-        linalloc_clear(&win32vars.frame_arena);
-        block_zero_struct(&win32vars.input_chunk.trans);
-        win32vars.active_key_stroke = 0;
-        win32vars.active_text_input = 0;
-        
-        // TODO(allen): Find a good way to wait on a pipe
-        // without interfering with the reading process.
-        // NOTE(allen): Looks like we can ReadFile with a
-        // size of zero in an IOCP for this effect.
-        if (!win32vars.first){
-            if (win32vars.running_cli == 0){
-                win32vars.got_useful_event = false;
-            }
-            
-            // NOTE(allen): while we're doing this (and possibly sleeping)
-            // we can let async processes get there time in.
-            system_release_global_frame_mutex(win32vars.tctx);
-            
-            b32 get_more_messages = true;
-            do{
-                if (win32vars.got_useful_event == 0){
-                    get_more_messages = GetMessage(&msg, 0, 0, 0);
-                }
-                else{
-                    get_more_messages = PeekMessage(&msg, 0, 0, 0, 1);
-                }
+    while (keep_running && GetMessage(&msg, 0, 0, 0) != 0){
+        b32 treat_normally = true;
+        if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN){
+            switch (msg.wParam){
+                case VK_CONTROL:case VK_LCONTROL:case VK_RCONTROL:
+                case VK_MENU:case VK_LMENU:case VK_RMENU:
+                case VK_SHIFT:case VK_LSHIFT:case VK_RSHIFT:break;
                 
-                if (get_more_messages){
-                    if (msg.message == WM_QUIT){
-                        keep_running = false;
-                    }
-                    else{
-                        b32 treat_normally = true;
-                        if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN){
-                            switch (msg.wParam){
-                                case VK_CONTROL:case VK_LCONTROL:case VK_RCONTROL:
-                                case VK_MENU:case VK_LMENU:case VK_RMENU:
-                                case VK_SHIFT:case VK_LSHIFT:case VK_RSHIFT:break;
-                                
-                                default: treat_normally = false; break;
-                            }
-                        }
-                        
-                        if (treat_normally){
-                            TranslateMessage(&msg);
-                            DispatchMessage(&msg);
-                        }
-                        else{
-                            Control_Keys *controls = &win32vars.input_chunk.pers.controls;
-                            
-                            b8 ctrl = (controls->r_ctrl || (controls->l_ctrl && !controls->r_alt));
-                            b8 alt = (controls->l_alt || (controls->r_alt && !controls->l_ctrl));
-                            
-                            if (win32vars.lctrl_lalt_is_altgr){
-                                if (controls->l_alt && controls->l_ctrl){
-                                    ctrl = 0;
-                                    alt = 0;
-                                }
-                            }
-                            
-                            BYTE ctrl_state = 0, alt_state = 0;
-                            BYTE state[256];
-                            if (ctrl || alt){
-                                GetKeyboardState(state);
-                                if (ctrl){
-                                    ctrl_state = state[VK_CONTROL];
-                                    state[VK_CONTROL] = 0;
-                                }
-                                if (alt){
-                                    alt_state = state[VK_MENU];
-                                    state[VK_MENU] = 0;
-                                }
-                                SetKeyboardState(state);
-                                
-                                TranslateMessage(&msg);
-                                DispatchMessage(&msg);
-                                
-                                if (ctrl){
-                                    state[VK_CONTROL] = ctrl_state;
-                                }
-                                if (alt){
-                                    state[VK_MENU] = alt_state;
-                                }
-                                SetKeyboardState(state);
-                            }
-                            else{
-                                TranslateMessage(&msg);
-                                DispatchMessage(&msg);
-                            }
-                        }
-                    }
-                }
-            }while (get_more_messages);
-            
-            system_acquire_global_frame_mutex(win32vars.tctx);
+                default: treat_normally = false; break;
+            }
         }
         
-        // NOTE(allen): Mouse Out of Window Detection
-        POINT mouse_point;
-        if (GetCursorPos(&mouse_point) &&
-            ScreenToClient(win32vars.window_handle, &mouse_point)){
-            Rect_i32 screen = Ri32(0, 0, target.width, target.height);
-            Vec2_i32 mp = V2i32(mouse_point.x, mouse_point.y);
-            win32vars.input_chunk.trans.out_of_window = (!rect_contains_point(screen, mp));
-            win32vars.input_chunk.pers.mouse = mp;
+        if (treat_normally){
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
         else{
-            win32vars.input_chunk.trans.out_of_window = true;
-        }
-        
-        // NOTE(allen): Prepare the Frame Input
-        
-        // TODO(allen): CROSS REFERENCE WITH LINUX SPECIAL CODE "TIC898989"
-        Win32_Input_Chunk input_chunk = win32vars.input_chunk;
-        
-        Scratch_Block scratch(win32vars.tctx);
-        Application_Step_Input input = {};
-        
-        input.first_step = win32vars.first;
-        input.dt = frame_useconds/1000000.f;
-        input.events = input_chunk.trans.event_list;
-        
-        input.mouse.out_of_window = input_chunk.trans.out_of_window;
-        
-        input.mouse.l = input_chunk.pers.mouse_l;
-        input.mouse.press_l = input_chunk.trans.mouse_l_press;
-        input.mouse.release_l = input_chunk.trans.mouse_l_release;
-        
-        input.mouse.r = input_chunk.pers.mouse_r;
-        input.mouse.press_r = input_chunk.trans.mouse_r_press;
-        input.mouse.release_r = input_chunk.trans.mouse_r_release;
-        
-        input.mouse.wheel = input_chunk.trans.mouse_wheel;
-        input.mouse.p = input_chunk.pers.mouse;
-        
-        input.trying_to_kill = input_chunk.trans.trying_to_kill;
-        
-        // TODO(allen): Not really appropriate to round trip this all the way to the OS layer, redo this system.
-        // NOTE(allen): Ask the Core About Exiting if We Have an Exit Signal
-        if (win32vars.send_exit_signal){
-            input.trying_to_kill = true;
-            win32vars.send_exit_signal = false;
-        }
-        
-        // NOTE(allen): Frame Clipboard Input
-        if (win32vars.clip_catch_all){
-            input.clipboard = system_get_clipboard(scratch, 0);
-        }
-        
-        win32vars.clip_post.size = 0;
-        
-        
-        // NOTE(allen): Application Core Update
-        Application_Step_Result result = app.step(win32vars.tctx, &target, base_ptr, &input);
-        
-        // NOTE(allen): Finish the Loop
-        if (result.perform_kill){
-            keep_running = false;
-        }
-        
-        // NOTE(allen): Post New Clipboard Content
-        if (win32vars.clip_post.size > 0){
-            win32_post_clipboard(scratch, (char*)win32vars.clip_post.str, (i32)win32vars.clip_post.size);
-        }
-        
-        // NOTE(allen): Switch to New Title
-        if (result.has_new_title){
-            SetWindowText_utf8(scratch, win32vars.window_handle, (u8*)result.title_string);
-        }
-        
-        // NOTE(allen): Switch to New Cursor
-        Win32SetCursorFromUpdate(result.mouse_cursor_type);
-        if (win32vars.cursor_show != win32vars.prev_cursor_show){
-            win32vars.prev_cursor_show = win32vars.cursor_show;
-            switch (win32vars.cursor_show){
-                case MouseCursorShow_Never:
-                {
-                    i32 counter = 0;
-                    do{
-                        counter = ShowCursor(false);
-                    }while(counter >= 0);
-                }break;
+            Control_Keys *controls = &win32vars.input_chunk.pers.controls;
+            
+            b8 ctrl = (controls->r_ctrl || (controls->l_ctrl && !controls->r_alt));
+            b8 alt = (controls->l_alt || (controls->r_alt && !controls->l_ctrl));
+            
+            if (win32vars.lctrl_lalt_is_altgr){
+                if (controls->l_alt && controls->l_ctrl){
+                    ctrl = 0;
+                    alt = 0;
+                }
+            }
+            
+            BYTE ctrl_state = 0, alt_state = 0;
+            BYTE state[256];
+            if (ctrl || alt){
+                GetKeyboardState(state);
+                if (ctrl){
+                    ctrl_state = state[VK_CONTROL];
+                    state[VK_CONTROL] = 0;
+                }
+                if (alt){
+                    alt_state = state[VK_MENU];
+                    state[VK_MENU] = 0;
+                }
+                SetKeyboardState(state);
                 
-                case MouseCursorShow_Always:
-                {
-                    i32 counter = 0;
-                    do{
-                        counter = ShowCursor(true);
-                    }while(counter <= 0);
-                }break;
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
                 
-                // TODO(allen): MouseCursorShow_HideWhenStill
+                if (ctrl){
+                    state[VK_CONTROL] = ctrl_state;
+                }
+                if (alt){
+                    state[VK_MENU] = alt_state;
+                }
+                SetKeyboardState(state);
+            }
+            else{
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
             }
         }
-        
-        // NOTE(allen): update lctrl_lalt_is_altgr status
-        win32vars.lctrl_lalt_is_altgr = (b8)result.lctrl_lalt_is_altgr;
-        
-        // NOTE(allen): render
-#if defined( WIN32_DX11 )
-        gl_render(&target);
-        g_dx11.swap_chain->Present( 1, 0 );
-#else
-        gl_render(&target);
-        SwapBuffers(hdc);
-#endif
-        
-        // NOTE(allen): toggle full screen
-        if (win32vars.do_toggle){
-            win32_toggle_fullscreen();
-            win32vars.do_toggle = false;
-        }
-        
-        // NOTE(allen): schedule another step if needed
-        if (result.animating){
-            system_schedule_step(0);
-        }
-        else if (win32vars.clip_catch_all){
-            system_wake_up_timer_set(win32vars.clip_wakeup_timer, 250);
-        }
-        
-        // NOTE(allen): sleep a bit to cool off :)
-        system_release_global_frame_mutex(win32vars.tctx);
-        
-        u64 timer_end = system_now_time();
-        u64 end_target = timer_start + frame_useconds;
-        
-        for (;timer_end < end_target;){
-            DWORD samount = (DWORD)((end_target - timer_end)/1000);
-            if (samount > 0){
-                Sleep(samount);
-            }
-            timer_end = system_now_time();
-        }
-        timer_start = system_now_time();
-        
-        system_acquire_global_frame_mutex(win32vars.tctx);
-        
-        win32vars.first = false;
     }
     
 #if defined( WIN32_DX11 ) && !SHIP_MODE

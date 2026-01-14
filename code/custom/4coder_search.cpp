@@ -398,6 +398,20 @@ word_complete_iter_next(Word_Complete_Iterator *it){
     }
 }
 
+function void
+word_complete_iter_prev(Word_Complete_Iterator *it){
+    if (it->node == 0 || it->node == it->list.first){
+        it->node = it->list.first;
+    }
+    else{
+        Node_String_Const_u8 *node = it->list.first;
+        while (node != 0 && node->next != it->node){
+            node = node->next;
+        }
+        it->node = node;
+    } 
+}
+
 function String_Const_u8
 word_complete_iter_read(Word_Complete_Iterator *it){
     String_Const_u8 result = {};
@@ -449,31 +463,59 @@ CUSTOM_DOC("Iteratively tries completing the word to the left of the cursor with
         set_next_rewrite(app, view, Rewrite_WordComplete);
         
         Word_Complete_Iterator *it = word_complete_get_shared_iter(app);
-        local_persist b32 initialized = false;
-        local_persist Range_i64 range = {};
         
-        if (first_completion || !initialized){
+        if (first_completion || !it->initialized){
             ProfileBlock(app, "word complete state init");
-            initialized = false;
+            it->initialized = false;
             i64 pos = view_get_cursor_pos(app, view);
             Range_i64 needle_range = get_word_complete_needle_range(app, buffer, pos);
             if (range_size(needle_range) > 0){
-                initialized = true;
-                range = needle_range;
                 word_complete_iter_init(buffer, needle_range, it);
+                it->initialized = true;
+                it->range = needle_range;
             }
         }
         
-        if (initialized){
+        if (it->initialized){
             ProfileBlock(app, "word complete apply");
             
             word_complete_iter_next(it);
             String_Const_u8 str = word_complete_iter_read(it);
             
-            buffer_replace_range(app, buffer, range, str);
+            buffer_replace_range(app, buffer, it->range, str);
             
-            range.max = range.min + str.size;
-            view_set_cursor_and_preferred_x(app, view, seek_pos(range.max));
+            it->range.max = it->range.min + str.size;
+            view_set_cursor_and_preferred_x(app, view, seek_pos(it->range.max));
+        }
+    }
+}
+
+CUSTOM_COMMAND_SIG(word_complete_prev)
+CUSTOM_DOC("Reverse iterates the word_complete list")
+{
+    ProfileScope(app, "word complete prev");
+    
+    View_ID view = get_active_view(app, Access_ReadWriteVisible);
+    Buffer_ID buffer = view_get_buffer(app, view, Access_ReadWriteVisible);
+    if (buffer != 0){
+        Managed_Scope scope = view_get_managed_scope(app, view);
+        Word_Complete_Iterator *it = word_complete_get_shared_iter(app);
+        set_next_rewrite(app, view, Rewrite_WordComplete);
+        
+        Rewrite_Type *rewrite = scope_attachment(app, scope, view_rewrite_loc, Rewrite_Type);
+        if (*rewrite != Rewrite_WordComplete || !it->initialized){
+            word_complete(app);
+        }
+        else {
+            ProfileBlock(app, "word complete apply prev");
+            
+            word_complete_iter_prev(it);
+            String_Const_u8 str = word_complete_iter_read(it);
+            
+            buffer_replace_range(app, buffer, it->range, str);
+            
+            it->range.max = it->range.min + str.size;
+            view_set_cursor_and_preferred_x(app, view, seek_pos(it->range.max));
         }
     }
 }

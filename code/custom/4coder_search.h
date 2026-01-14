@@ -17,6 +17,9 @@ struct Word_Complete_Iterator{
     Application_Links *app;
     Arena *arena;
     
+    b32 initialized;
+    Range_i64 range;
+    
     Temp_Memory arena_restore;
     Buffer_ID first_buffer;
     Buffer_ID current_buffer;

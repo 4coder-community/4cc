@@ -57,7 +57,7 @@
 
 # define COMPILER_GCC 1
 
-# if defined(__gnu_linux__)
+# if defined(__gnu_linux__) || defined(__linux__)
 #  define OS_LINUX 1
 # else
 #  error This compiler/platform combo is not supported yet

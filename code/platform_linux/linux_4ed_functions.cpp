@@ -67,7 +67,10 @@ system_get_canonical(Arena* arena, String_Const_u8 name){
     
     // first remove redundant ../, //, ./ parts
     
-    const u8* input = (u8*) strndupa((char*)name.str, name.size);
+    char *tmp = (char*)alloca(name.size + 1);
+    memcpy(tmp, name.str, name.size);
+    tmp[name.size] = 0;
+    const u8* input = (u8*)tmp;
     u8* output = push_array(arena, u8, name.size + 1);
     
     const u8* p = input;
@@ -122,7 +125,9 @@ system_get_file_list(Arena* arena, String_Const_u8 directory){
     //LINUX_FN_DEBUG("%.*s", (int)directory.size, directory.str);
     File_List result = {};
     
-    char* path = strndupa((char*)directory.str, directory.size);
+    char *path = (char*)alloca(directory.size + 1);
+    memcpy(path, directory.str, directory.size);
+    path[directory.size] = 0;
     int fd = open(path, O_RDONLY | O_DIRECTORY);
     if(fd == -1) {
         perror("open");
@@ -168,7 +173,7 @@ system_get_file_list(Arena* arena, String_Const_u8 directory){
             *fip++ = f;
         }
         
-        qsort(result.infos, result.count, sizeof(File_Info*), (__compar_fn_t)&linux_compare_file_infos);
+        qsort(result.infos, result.count, sizeof(File_Info*), (int(*)(const void*, const void*))&linux_compare_file_infos);
         
         for(u32 i = 0; i < result.count - 1; ++i) {
             result.infos[i]->next = result.infos[i+1];
@@ -334,7 +339,7 @@ function
 system_universal_date_time_from_local_sig(){
     struct tm local_tm = {};
     linux_tm_from_date_time(&local_tm, date_time);
-    time_t loc_time = timelocal(&local_tm);
+    time_t loc_time = mktime(&local_tm);
     struct tm *utc_tm = gmtime(&loc_time);
     Date_Time result = {};
     linux_date_time_from_tm(&result, utc_tm);

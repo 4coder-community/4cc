@@ -64,70 +64,31 @@ system_get_path(Arena* arena, System_Path_Code path_code){
 
 internal String_Const_u8
 system_get_canonical(Arena* arena, String_Const_u8 name){
+    Assert(name.size < PATH_MAX - 1);
+    char tmp[PATH_MAX] = { 0 };
+    strncpy(tmp, (const char *)name.str, name.size);
+
+    char real[PATH_MAX] = { 0 };
+    realpath(tmp, real);
     
-    // first remove redundant ../, //, ./ parts
-    
-    char *tmp = (char*)alloca(name.size + 1);
-    memcpy(tmp, name.str, name.size);
-    tmp[name.size] = 0;
-    const u8* input = (u8*)tmp;
-    u8* output = push_array(arena, u8, name.size + 1);
-    
-    const u8* p = input;
-    u8* q = output;
-    
-    while(*p) {
-        
-        // not a slash - copy char
-        if(p[0] != '/') {
-            *q++ = *p++;
-            continue;
-        }
-        
-        // two slashes in a row, skip one.
-        if(p[1] == '/') {
-            ++p;
-        }
-        else if(p[1] == '.') {
-            
-            // skip "/./" or trailing "/."
-            if(p[2] == '/' || p[2] == '\0') {
-                p += 2;
-            }
-            
-            // if we encounter "/../" or trailing "/..", remove last directory instead
-            else if(p[2] == '.' && (p[3] == '/' || p[3] == '\0')) {
-                while(q > output && *--q != '/'){};
-                p += 3;
-            }
-            
-            else {
-                *q++ = *p++;
-            }
-        }
-        else {
-            *q++ = *p++;
-        }
-    }
-    
+    String_Const_u8 result = SCu8((u8*)real, cstring_length(real));
 #ifdef INSO_DEBUG
     if(name.size != q - output) {
-        LINUX_FN_DEBUG("[%.*s] -> [%.*s]", (int)name.size, name.str, (int)(q - output), output);
+        LINUX_FN_DEBUG("[%.*s] -> [%s]", (int)name.size, name.str, real);
     }
 #endif
-    
-    // TODO: use realpath at this point to resolve symlinks?
-    return SCu8(output, q - output);
+    return result;
 }
 
 internal File_List
 system_get_file_list(Arena* arena, String_Const_u8 directory){
+    Assert(directory.size < PATH_MAX - 1);
     //LINUX_FN_DEBUG("%.*s", (int)directory.size, directory.str);
     File_List result = {};
     
-    char *path = (char*)alloca(directory.size + 1);
-    memcpy(path, directory.str, directory.size);
-    path[directory.size] = 0;
+    char path[PATH_MAX] = { 0 };
+    strncpy(path, (const char *)directory.str, directory.size);
+
     int fd = open(path, O_RDONLY | O_DIRECTORY);
     if(fd == -1) {
         perror("open");

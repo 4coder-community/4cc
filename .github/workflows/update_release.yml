@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - develop
     tags:
       - v*
 
@@ -12,22 +13,27 @@ jobs:
     uses: ./.github/workflows/build.yml
 
   publish_release:
-    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master'
+    if: github.ref_type == 'tag' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop'
     needs: build_4cc
     name: Upload Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
-      RELEASE_TITLE: ${{ github.ref_type == 'tag' && github.ref_name || 'Latest' }}
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || github.ref == 'refs/heads/develop' && 'unstable' || 'latest' }}
+      RELEASE_TITLE: ${{ github.ref_type == 'tag' && github.ref_name || github.ref == 'refs/heads/develop' && 'Unstable' || 'Latest' }}
+      RELEASE_TARGET: ${{ github.sha }}
+      RELEASE_PRERELEASE_FLAG: ${{ github.ref == 'refs/heads/develop' && '--prerelease' || '' }}
       
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
     - name: Create Release Exists
       run: |
         if ! gh release view "$RELEASE_NAME" --repo "${{ github.repository }}"; then
-          gh release create "$RELEASE_NAME" --repo "${{ github.repository }}" --title "$RELEASE_TITLE" --notes " "
+          gh release create "$RELEASE_NAME" --repo "${{ github.repository }}" --title "$RELEASE_TITLE" --target "$RELEASE_TARGET" $RELEASE_PRERELEASE_FLAG --notes " "
         fi
 
     - name: Download 4cc Artifacts
@@ -42,3 +48,9 @@ jobs:
 
     - name: Upload to Release
       run: gh release upload "$RELEASE_NAME" artifacts_dir/4cc-*.zip --repo "${{ github.repository }}" --clobber
+      
+    - name: Update Rolling Release Tag
+      if: github.ref_type != 'tag'
+      run: |
+        git tag -f "$RELEASE_NAME" "$RELEASE_TARGET"
+        git push --force origin "refs/tags/$RELEASE_NAME"

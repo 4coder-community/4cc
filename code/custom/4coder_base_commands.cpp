@@ -1895,7 +1895,7 @@ CUSTOM_DOC("Advances forwards through the undo history of the current buffer.")
     History_Record_Index current = buffer_history_get_current_state_index(app, buffer);
     History_Record_Index max_index = buffer_history_get_max_record_index(app, buffer);
     if (current < max_index){
-        Record_Info record = buffer_history_get_record_info(app, buffer, current);
+        Record_Info record = buffer_history_get_record_info(app, buffer, current + 1);
         i64 new_position = record_get_new_cursor_position_redo(app, buffer, current + 1, record);
         
         buffer_history_set_current_state_index(app, buffer, current + 1);

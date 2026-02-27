@@ -163,6 +163,8 @@
 #define custom_get_string_advance_sig() f32 custom_get_string_advance(Application_Links* app, Face_ID font_id, String_Const_u8 str)
 #define custom_draw_rectangle_sig() void custom_draw_rectangle(Application_Links* app, Rect_f32 rect, f32 roundness, ARGB_Color color)
 #define custom_draw_rectangle_outline_sig() void custom_draw_rectangle_outline(Application_Links* app, Rect_f32 rect, f32 roundness, f32 thickness, ARGB_Color color)
+#define custom_draw_rectangle_outline_corner_parameters_sig() void custom_draw_rectangle_outline_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1)
+#define custom_draw_rectangle_corner_parameters_sig() void custom_draw_rectangle_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1)
 #define custom_draw_set_clip_sig() Rect_f32 custom_draw_set_clip(Application_Links* app, Rect_f32 new_clip)
 #define custom_text_layout_create_sig() Text_Layout_ID custom_text_layout_create(Application_Links* app, Buffer_ID buffer_id, Rect_f32 rect, Buffer_Point buffer_point)
 #define custom_text_layout_region_sig() Rect_f32 custom_text_layout_region(Application_Links* app, Text_Layout_ID text_layout_id)
@@ -343,6 +345,8 @@ typedef Vec2_f32 custom_draw_string_oriented_type(Application_Links* app, Face_I
 typedef f32 custom_get_string_advance_type(Application_Links* app, Face_ID font_id, String_Const_u8 str);
 typedef void custom_draw_rectangle_type(Application_Links* app, Rect_f32 rect, f32 roundness, ARGB_Color color);
 typedef void custom_draw_rectangle_outline_type(Application_Links* app, Rect_f32 rect, f32 roundness, f32 thickness, ARGB_Color color);
+typedef void custom_draw_rectangle_outline_corner_parameters_type(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
+typedef void custom_draw_rectangle_corner_parameters_type(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
 typedef Rect_f32 custom_draw_set_clip_type(Application_Links* app, Rect_f32 new_clip);
 typedef Text_Layout_ID custom_text_layout_create_type(Application_Links* app, Buffer_ID buffer_id, Rect_f32 rect, Buffer_Point buffer_point);
 typedef Rect_f32 custom_text_layout_region_type(Application_Links* app, Text_Layout_ID text_layout_id);
@@ -524,6 +528,8 @@ struct API_VTable_custom{
     custom_get_string_advance_type *get_string_advance;
     custom_draw_rectangle_type *draw_rectangle;
     custom_draw_rectangle_outline_type *draw_rectangle_outline;
+    custom_draw_rectangle_outline_corner_parameters_type *draw_rectangle_outline_corner_parameters;
+    custom_draw_rectangle_corner_parameters_type *draw_rectangle_corner_parameters;
     custom_draw_set_clip_type *draw_set_clip;
     custom_text_layout_create_type *text_layout_create;
     custom_text_layout_region_type *text_layout_region;
@@ -706,6 +712,8 @@ internal Vec2_f32 draw_string_oriented(Application_Links* app, Face_ID font_id, 
 internal f32 get_string_advance(Application_Links* app, Face_ID font_id, String_Const_u8 str);
 internal void draw_rectangle(Application_Links* app, Rect_f32 rect, f32 roundness, ARGB_Color color);
 internal void draw_rectangle_outline(Application_Links* app, Rect_f32 rect, f32 roundness, f32 thickness, ARGB_Color color);
+internal void draw_rectangle_outline_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, f32 thickness_x0y0, f32 thickness_x1y0, f32 thickness_x0y1, f32 thickness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
+internal void draw_rectangle_corner_parameters(Application_Links* app, Rect_f32 rect, f32 roundness_x0y0, f32 roundness_x1y0, f32 roundness_x0y1, f32 roundness_x1y1, u32 color_x0y0, u32 color_x1y0, u32 color_x0y1, u32 color_x1y1);
 internal Rect_f32 draw_set_clip(Application_Links* app, Rect_f32 new_clip);
 internal Text_Layout_ID text_layout_create(Application_Links* app, Buffer_ID buffer_id, Rect_f32 rect, Buffer_Point buffer_point);
 internal Rect_f32 text_layout_region(Application_Links* app, Text_Layout_ID text_layout_id);
@@ -888,6 +896,8 @@ global custom_draw_string_oriented_type *draw_string_oriented = 0;
 global custom_get_string_advance_type *get_string_advance = 0;
 global custom_draw_rectangle_type *draw_rectangle = 0;
 global custom_draw_rectangle_outline_type *draw_rectangle_outline = 0;
+global custom_draw_rectangle_outline_corner_parameters_type *draw_rectangle_outline_corner_parameters = 0;
+global custom_draw_rectangle_corner_parameters_type *draw_rectangle_corner_parameters = 0;
 global custom_draw_set_clip_type *draw_set_clip = 0;
 global custom_text_layout_create_type *text_layout_create = 0;
 global custom_text_layout_region_type *text_layout_region = 0;

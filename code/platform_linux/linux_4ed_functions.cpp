@@ -71,10 +71,13 @@ system_get_canonical(Arena* arena, String_Const_u8 name){
     char real[PATH_MAX] = { 0 };
     realpath(tmp, real);
     
-    String_Const_u8 result = SCu8((u8*)real, cstring_length(real));
+    String_Const_u8 result = push_string_copy(arena,
+                                              SCu8((u8*)real, cstring_length(real)));
 #ifdef INSO_DEBUG
-    if(name.size != q - output) {
-        LINUX_FN_DEBUG("[%.*s] -> [%s]", (int)name.size, name.str, real);
+    if(name.size != result.size) {
+        LINUX_FN_DEBUG("[%.*s] -> [%.*s]",
+                       (int)name.size, name.str,
+                       (int)result.size, result.str);
     }
 #endif
     return result;
@@ -91,6 +94,7 @@ system_get_file_list(Arena* arena, String_Const_u8 directory){
 
     int fd = open(path, O_RDONLY | O_DIRECTORY);
     if(fd == -1) {
+        LINUX_FN_DEBUG("Failed to open directory: %.*s", (int)directory.size, directory.str);
         perror("open");
         return result;
     }
@@ -218,6 +222,7 @@ system_save_file(Arena* scratch, char* file_name, String_Const_u8 data){
         }
         close(fd);
     } else {
+        LINUX_FN_DEBUG("Failed to open file: %s", file_name);
         perror("open");
     }
     

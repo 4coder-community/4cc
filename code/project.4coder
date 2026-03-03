@@ -1,6 +1,11 @@
 version(2);
 project_name = "4coder";
 
+indent_with_tabs = false;
+indent_width = 4;
+default_tab_width = 4;
+indent_clear_blank_lines = false;
+
 patterns = {
  "*.c",
  "*.cpp",

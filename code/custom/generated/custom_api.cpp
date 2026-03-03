@@ -165,6 +165,8 @@ custom_api_fill_vtable(API_VTable_custom *vtable){
     vtable->get_string_advance = get_string_advance;
     vtable->draw_rectangle = draw_rectangle;
     vtable->draw_rectangle_outline = draw_rectangle_outline;
+    vtable->draw_rectangle_outline_corner_parameters = draw_rectangle_outline_corner_parameters;
+    vtable->draw_rectangle_corner_parameters = draw_rectangle_corner_parameters;
     vtable->draw_set_clip = draw_set_clip;
     vtable->text_layout_create = text_layout_create;
     vtable->text_layout_region = text_layout_region;
@@ -349,6 +351,8 @@ custom_api_read_vtable(API_VTable_custom *vtable){
     get_string_advance = vtable->get_string_advance;
     draw_rectangle = vtable->draw_rectangle;
     draw_rectangle_outline = vtable->draw_rectangle_outline;
+    draw_rectangle_outline_corner_parameters = vtable->draw_rectangle_outline_corner_parameters;
+    draw_rectangle_corner_parameters = vtable->draw_rectangle_corner_parameters;
     draw_set_clip = vtable->draw_set_clip;
     text_layout_create = vtable->text_layout_create;
     text_layout_region = vtable->text_layout_region;

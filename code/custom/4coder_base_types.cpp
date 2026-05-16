@@ -4685,6 +4685,7 @@ string_match(String_Const_char a, String_Const_char b){
     }
     return(result);
 }
+
 function b32
 string_match(String_Const_u8 a, String_Const_u8 b){
     b32 result = false;
@@ -5179,6 +5180,19 @@ string_mod_replace_character(String_Const_char str, char o, char n){
     }
     return(str);
 }
+
+bool operator==(String_Const_char x, String_Const_char y) {
+    return string_match(x, y);
+}
+
+bool operator==(String_Const_char x, const char* y) {
+    return string_match(x, SCchar((char*)y));
+}
+
+bool string_has_prefix(String_Const_char x, const char* prefix) {
+    return (string_find_first(x, SCchar((char*)prefix)) == 0);
+}
+
 function String_Const_u8
 string_mod_replace_character(String_Const_u8 str, u8 o, u8 n){
     for (u64 i = 0; i < str.size; i += 1){

@@ -175,6 +175,14 @@
 # define LANGVER_CXX23 0
 #endif
 
+#if !defined(SHIP_MODE)
+# define SHIP_MODE 0
+#else
+# undef SHIP_MODE
+# define SHIP_MODE 1
+#endif 
+
+
 // names
 
 #if COMPILER_CL

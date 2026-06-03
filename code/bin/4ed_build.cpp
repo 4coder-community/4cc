@@ -311,7 +311,7 @@ build(Arena *arena, u32 flags, u32 arch, char *code_path, char **code_files, cha
 
 # define GCC_LIBS_COMMON       \
 "-lX11 -lpthread -lm -lrt "   \
-"-lGL -ldl -lXfixes -lfreetype -lfontconfig"
+"-lGL -ldl -lXfixes -lXrandr -lfreetype -lfontconfig"
 
 # define GCC_LIBS_X64 GCC_LIBS_COMMON
 # define GCC_LIBS_X86 GCC_LIBS_COMMON

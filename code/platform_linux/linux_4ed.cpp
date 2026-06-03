@@ -12,9 +12,6 @@
 
 #include <stdio.h>
 
-#define FPS 60
-#define frame_useconds (Million(1) / FPS)
-#define frame_nseconds (Billion(1) / FPS)
 #define SLASH '/'
 #define DLL "so"
 
@@ -93,6 +90,7 @@
 #include <X11/extensions/Xfixes.h>
 #include <X11/XKBlib.h>
 #include <X11/keysym.h>
+#include <X11/extensions/Xrandr.h>
 #define function static
 #undef Cursor
 
@@ -161,6 +159,8 @@ struct Linux_Vars {
     
     Display* dpy;
     Window win;
+    
+    i64 frame_useconds;
     
     b32 has_xfixes;
     int xfixes_selection_event;
@@ -388,12 +388,12 @@ linux_schedule_step(){
     struct itimerspec its = {};
     timerfd_gettime(linuxvars.step_timer_fd, &its);
     
-    if (diff > frame_useconds) {
+    if (diff > linuxvars.frame_useconds) {
         its.it_value.tv_nsec = 1;
         timerfd_settime(linuxvars.step_timer_fd, 0, &its, NULL);
     } else {
         if (its.it_value.tv_sec == 0 && its.it_value.tv_nsec == 0){
-            its.it_value.tv_nsec = (frame_useconds - diff) * 1000UL;
+            its.it_value.tv_nsec = (linuxvars.frame_useconds - diff) * 1000UL;
             timerfd_settime(linuxvars.step_timer_fd, 0, &its, NULL);
         }
     }
@@ -1000,6 +1000,51 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
         
         XFreePixmap(linuxvars.dpy, p);
     }
+    
+    // NOTE(maria): try to find refresh rate with a fallback of 60Hz
+    int ChosenRefreshRate = 0;
+    
+    XRRScreenResources *screen_resources = XRRGetScreenResources(linuxvars.dpy, XDefaultRootWindow(linuxvars.dpy));
+    if(screen_resources)
+    {
+        for(int crtc_index = 0;
+            crtc_index < screen_resources->ncrtc;
+            ++crtc_index)
+        {
+            XRRCrtcInfo *crtc = XRRGetCrtcInfo(linuxvars.dpy, screen_resources, screen_resources->crtcs[crtc_index]);
+            if(crtc)
+            {
+                if(crtc->mode != None)
+                {
+                    for(int mode_index = 0;
+                        mode_index < screen_resources->nmode;
+                        ++mode_index)
+                    {
+                        XRRModeInfo *mode = &screen_resources->modes[mode_index];
+                        if(mode->id == crtc->mode)
+                        {
+                            int RefreshRate = (int)roundf((float)mode->dotClock / ((float)mode->hTotal * (float)mode->vTotal));
+                            if(RefreshRate > ChosenRefreshRate)
+                            {
+                                ChosenRefreshRate = RefreshRate;
+                            }
+                        }
+                    }
+                }
+                
+                XRRFreeCrtcInfo(crtc);
+            }
+        }
+        
+        XRRFreeScreenResources(screen_resources);
+    }
+    
+    if(!ChosenRefreshRate)
+    {
+        ChosenRefreshRate = 60;
+    }
+    
+    linuxvars.frame_useconds = Million(1) / ChosenRefreshRate;
 }
 
 global Key_Code keycode_lookup_table_physical[255];
@@ -1979,7 +2024,7 @@ main(int argc, char **argv){
         linuxvars.received_new_clipboard = false;
         
         input.first_step = first_step;
-        input.dt = frame_useconds/1000000.f; // variable?
+        input.dt = linuxvars.frame_useconds/1000000.f; // variable?
         input.events = linuxvars.input.trans.event_list;
         input.trying_to_kill = linuxvars.input.trans.trying_to_kill;
         

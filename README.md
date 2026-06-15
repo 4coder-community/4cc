@@ -2,6 +2,42 @@
 
 # Building
 
+## Build script parameter
+
+Check available options by running:
+
+```
+Usage: build [options]
+
+Options:
+    -m=<string>, --mode=<string>
+        Sets build mode 
+        Available modes:
+            - debug
+            - release
+        Default: debug
+
+    -gl=<string> --gl-api=<string>
+        Sets the graphics API to use
+        Available backends:
+            - OpenGL
+            - DX11 (Windows only)
+        Default: OpenGL
+
+    -s, --symbols
+        Adds debug symbols. Already set by --mode=debug.
+
+    -O, --optimizations
+        Adds optimizations. Already set by --mode=release.
+
+    -h, --help
+        Display this help text and exit
+
+    -v, --verbose
+        Display build debug information like command currentely executing
+
+```
+
 ## Windows
 
 > [!NOTE]
@@ -41,20 +77,6 @@ sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common
 arch -arch x86_64 ./build.sh
 ```
 
-## Build script parameter
-
-Check available options by running:
-
-Windows:
-```cmd
-.\build.bat --help
-```
-
-Linux/MacOS:
-```sh
-./build.sh --help
-```
-   
 ## API generators
 
 4coder uses several small programs to generate some headers and source files. Those do not run automatically, you must build them and run them when needed (which shouldn't really happen).

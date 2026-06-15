@@ -1,8 +1,11 @@
 @echo off
 
+set prev_cwd=%cd%
+
 rem Make sure we are at the root of the project
 cd /D "%~dp0"
 
+set root=%cd%
 set src_root=%cd%\code
 set custom_root=%src_root%\custom
 set build_root=%cd%\build
@@ -18,9 +21,11 @@ set opts=/nologo /FC /Zi /I%src_root% /I%custom_root%
 if not exist "%build_root%" mkdir %build_root%
 pushd %build_root%
 call cl %opts% %src_root%\4ed_build.cpp /Febuild
-if %ERRORLEVEL% neq 0 exit /b
 popd
 
-pushd %src_root%
+if %ERRORLEVEL% neq 0 exit /b
+
 %build_root%\build.exe %*
-popd
+
+:END
+cd /D "%prev_cwd%"

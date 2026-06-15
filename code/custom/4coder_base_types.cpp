@@ -5181,16 +5181,8 @@ string_mod_replace_character(String_Const_char str, char o, char n){
     return(str);
 }
 
-bool operator==(String_Const_char x, String_Const_char y) {
-    return string_match(x, y);
-}
-
-bool operator==(String_Const_char x, const char* y) {
-    return string_match(x, SCchar((char*)y));
-}
-
-bool string_has_prefix(String_Const_char x, const char* prefix) {
-    return (string_find_first(x, SCchar((char*)prefix)) == 0);
+bool string_has_prefix(String_Const_char s, String_Const_char prefix) {
+    return (string_match(string_prefix(s, prefix.size), prefix));
 }
 
 function String_Const_u8

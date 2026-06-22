@@ -17,10 +17,10 @@ jobs:
           build_cmd: .\build.bat --gl-api=OpenGL
         - suffix: x64-linux
           os: ubuntu-latest
-          build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && bash ./build.sh
+          build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./build.sh
         - suffix: x64-mac
           os: macos-15-intel
-          build_cmd: bash ./build.sh
+          build_cmd: ./build.sh
         # - suffix: arm64-mac
         #   os: macos-latest
         #   build_cmd: arch -arch x86_64 ./bin/build-mac.sh

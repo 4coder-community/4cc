@@ -404,7 +404,6 @@ dispatch_build(Arena* arena, BuildFlags flags) {
     switch (flags.type) {
         case MODE_DEBUG: {
             string_list_push(arena, &defines, SCchar("FRED_INTERNAL"));
-            string_list_push(arena, &defines, SCchar("DO_CRAZY_EXPENSIVE_ASSERTS"));
         } break;
         case MODE_RELEASE: {
             string_list_push(arena, &defines, SCchar("SHIP_MODE"));

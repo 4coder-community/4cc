@@ -501,7 +501,7 @@ Options:
     -s, --symbols
         Adds debug symbols. Already set by --mode=debug.
 
-    -O, --optimizations
+    -o, --optimizations
         Adds optimizations. Already set by --mode=release.
 
     -h, --help
@@ -535,7 +535,7 @@ BuildFlags parse_flags(int argc, const char** argv) {
             flags.opts |= VERBOSE;
         } else if (smchi(arg, SCchar("-s")) || smchi(arg, SCchar("--symbols"))) {
             flags.opts |= DEBUG_INFO;
-        } else if (smchi(arg, SCchar("-O")) || smchi(arg, SCchar("--optimiziations"))) {
+        } else if (smchi(arg, SCchar("-o")) || smchi(arg, SCchar("--optimiziations"))) {
             flags.opts |= OPTIMIZATION;
         } else if (string_has_prefix(arg, SCchar("-m=")) || string_has_prefix(arg, SCchar("--mode="))) {
             String_Const_char param = get_flag_value(arg);

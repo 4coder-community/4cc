@@ -4,8 +4,6 @@
 
 ## Build script parameter
 
-Check available options by running:
-
 ```
 Usage: build [options]
 
@@ -27,7 +25,7 @@ Options:
     -s, --symbols
         Adds debug symbols. Already set by --mode=debug.
 
-    -O, --optimizations
+    -o, --optimizations
         Adds optimizations. Already set by --mode=release.
 
     -h, --help

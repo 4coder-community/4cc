@@ -414,16 +414,18 @@ dispatch_build(Arena* arena, BuildFlags flags) {
         } break;
     }
 
-    switch (flags.backend) {
-        case GLAPI_OPENGL: {
-            string_list_push(arena, &defines, SCchar("WIN32_OPENGL"));
-        } break;
-        case GLAPI_DX11: {
-            string_list_push(arena, &defines, SCchar("WIN32_DX11"));
-        } break;
-        default: {
-            InvalidPath;
-        } break;
+    if (OS_WINDOWS) {
+        switch (flags.backend) {
+            case GLAPI_OPENGL: {
+                string_list_push(arena, &defines, SCchar("WIN32_OPENGL"));
+            } break;
+            case GLAPI_DX11: {
+                string_list_push(arena, &defines, SCchar("WIN32_DX11"));
+            } break;
+            default: {
+                InvalidPath;
+            } break;
+        }
     }
 
     // Build 4ed_app

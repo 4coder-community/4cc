@@ -4685,6 +4685,7 @@ string_match(String_Const_char a, String_Const_char b){
     }
     return(result);
 }
+
 function b32
 string_match(String_Const_u8 a, String_Const_u8 b){
     b32 result = false;
@@ -5179,6 +5180,11 @@ string_mod_replace_character(String_Const_char str, char o, char n){
     }
     return(str);
 }
+
+bool string_has_prefix(String_Const_char s, String_Const_char prefix) {
+    return (string_match(string_prefix(s, prefix.size), prefix));
+}
+
 function String_Const_u8
 string_mod_replace_character(String_Const_u8 str, u8 o, u8 n){
     for (u64 i = 0; i < str.size; i += 1){

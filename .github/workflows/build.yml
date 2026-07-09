@@ -11,16 +11,16 @@ jobs:
         include:
         - suffix: x64-win-dx11
           os: windows-latest
-          build_cmd: bin\build.bat /DWIN32_DX11
+          build_cmd: .\build.bat --gl-api=DX11
         - suffix: x64-win-gl
           os: windows-latest
-          build_cmd: bin\build.bat /DWIN32_OPENGL
+          build_cmd: .\build.bat --gl-api=OpenGL
         - suffix: x64-linux
           os: ubuntu-latest
-          build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./bin/build-linux.sh
+          build_cmd: sudo apt update -y && sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common-dev libasound2-dev libfreetype-dev libfontconfig-dev -y && ./build.sh
         - suffix: x64-mac
           os: macos-15-intel
-          build_cmd: ./bin/build-mac.sh
+          build_cmd: ./build.sh
         # - suffix: arm64-mac
         #   os: macos-latest
         #   build_cmd: arch -arch x86_64 ./bin/build-mac.sh
@@ -29,7 +29,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: ilammy/msvc-dev-cmd@v1.4.1  # this is a no-op on Linux and macOS
     - name: Build 4cc-${{ matrix.suffix }}
-      run: cd code && ${{ matrix.build_cmd }} && cd ..
+      run: ${{ matrix.build_cmd }}
     - name: Generate 4cc Artifacts
       uses: actions/upload-artifact@v4.6.0
       with:

@@ -67,8 +67,6 @@ linux_audio_main(void* _unused)
     const u32 SamplesPerSecond = 48000;
     const u32 SamplesPerBuffer = 16*SamplesPerSecond/1000;
     const u32 ChannelCount = 2;
-    const u32 BytesPerSample = 2; // S16LE
-    const u32 BufferSize = SamplesPerBuffer * BytesPerSample;
     const u32 BufferCount = 3;
     const u32 MixBufferSize = (SamplesPerBuffer * ChannelCount * sizeof(f32));
     const u32 SampleBufferSize = (SamplesPerBuffer * ChannelCount * sizeof(i16));
@@ -99,7 +97,10 @@ linux_audio_main(void* _unused)
 	chk( snd_pcm.hw_params_set_format      (pcm, hw, SND_PCM_FORMAT_S16_LE));
 	chk( snd_pcm.hw_params_set_channels    (pcm, hw, ChannelCount));
 	chk( snd_pcm.hw_params_set_rate        (pcm, hw, SamplesPerSecond, 0));
-	chk( snd_pcm.hw_params_set_buffer_size (pcm, hw, BufferSize * BufferCount));
+	snd_pcm_uframes_t period_frames = SamplesPerBuffer;
+	snd_pcm_uframes_t buffer_frames  = period_frames * BufferCount;
+	chk( snd_pcm.hw_params_set_period_size_near (pcm, hw, &period_frames, 0));
+	chk( snd_pcm.hw_params_set_buffer_size_near (pcm, hw, &buffer_frames));
 	chk( snd_pcm.hw_params                 (pcm, hw));
 	     snd_pcm.hw_params_free            (hw);
 

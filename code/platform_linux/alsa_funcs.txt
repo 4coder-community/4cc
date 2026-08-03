@@ -8,6 +8,8 @@ ALSA_FN(int              , hw_params_set_format     , (snd_pcm_t *pcm, snd_pcm_h
 ALSA_FN(int              , hw_params_set_channels   , (snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int val))
 ALSA_FN(int              , hw_params_set_rate       , (snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int val, int dir))
 ALSA_FN(int              , hw_params_set_buffer_size, (snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_uframes_t val))
+ALSA_FN(int              , hw_params_set_period_size_near, (snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val, int dir))
+ALSA_FN(int              , hw_params_set_buffer_size_near, (snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_uframes_t *val))
 ALSA_FN(int              , hw_params                , (snd_pcm_t *pcm, snd_pcm_hw_params_t *params))
 ALSA_FN(void             , hw_params_free           , (snd_pcm_hw_params_t *obj))
 ALSA_FN(int              , poll_descriptors_count   , (snd_pcm_t *pcm))

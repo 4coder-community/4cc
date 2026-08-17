@@ -91,6 +91,7 @@
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/XInput2.h>
 #include <X11/XKBlib.h>
 #include <X11/keysym.h>
 #define function static
@@ -180,6 +181,13 @@ struct Linux_Vars {
     int epoll;
     int step_timer_fd;
     u64 last_step_time;
+    
+    b32 smooth_scroll;
+    int xinput_opcode;
+    int v_scroll_valuator;
+    double v_scroll_increment;
+    int h_scroll_valuator;
+    double h_scroll_increment;
     
     XCursor xcursors[APP_MOUSE_CURSOR_COUNT];
     Application_Mouse_Cursor cursor;
@@ -962,6 +970,49 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
         | xim_event_mask;
     
     XSelectInput(linuxvars.dpy, linuxvars.win, event_mask);
+    
+    // init precise scrolling using XInput2
+    
+    int xi_opcode, xi_firstevent, xi_firsterror;
+    if (XQueryExtension(linuxvars.dpy, "XInputExtension", &xi_opcode, &xi_firstevent, &xi_firsterror)) {
+        int major = 2, minor = 2; 
+        if (XIQueryVersion(linuxvars.dpy, &major, &minor) == Success) {
+            linuxvars.smooth_scroll = true;
+            linuxvars.xinput_opcode = xi_opcode; // Store to identify GenericEvent types later
+            
+            // Register XI_Motion events for smooth scrolling
+            XIEventMask xi_mask;
+            unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+            
+            xi_mask.deviceid = XIAllMasterDevices;
+            xi_mask.mask_len = sizeof(mask_bytes);
+            xi_mask.mask = mask_bytes;
+            
+            XISetMask(xi_mask.mask, XI_Motion);
+            XISelectEvents(linuxvars.dpy, linuxvars.win, &xi_mask, 1);
+            
+            // Fetch scroll class increments and valuator mappings
+            int num_devices = 0;
+            XIDeviceInfo *info = XIQueryDevice(linuxvars.dpy, XIAllMasterDevices, &num_devices);
+            for (int i = 0; i < num_devices; i++) {
+                for (int j = 0; j < info[i].num_classes; j++) {
+                    if (info[i].classes[j]->type == XIScrollClass) {
+                        XIScrollClassInfo *scroll = (XIScrollClassInfo*)info[i].classes[j];
+                        if (scroll->scroll_type == XIScrollTypeVertical) {
+                            linuxvars.v_scroll_valuator = scroll->number;
+                            linuxvars.v_scroll_increment = scroll->increment;
+                        } else if (scroll->scroll_type == XIScrollTypeHorizontal) {
+                            linuxvars.h_scroll_valuator = scroll->number;
+                            linuxvars.h_scroll_increment = scroll->increment;
+                        }
+                    }
+                }
+            }
+            if (info) XIFreeDeviceInfo(info);
+        } else { // smooth scrolling isn't supported
+            linuxvars.smooth_scroll = false;
+        }
+    }
     
     // init XKB keyboard extension
     

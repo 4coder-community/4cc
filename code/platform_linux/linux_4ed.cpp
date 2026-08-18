@@ -198,10 +198,10 @@ struct Linux_Vars {
     i32 num_scroll_devices;
     Linux_Scroll_Info device_scroll_info[MAX_SCROLL_DEVICES];
     int xinput_opcode;
-    int v_scroll_valuator, prev_v_scroll_valuator;
+    /*int v_scroll_valuator, prev_v_scroll_valuator;
     double v_scroll_increment;
     int h_scroll_valuator, prev_h_scroll_valuator;
-    double h_scroll_increment;
+    double h_scroll_increment;*/
     
     XCursor xcursors[APP_MOUSE_CURSOR_COUNT];
     Application_Mouse_Cursor cursor;
@@ -987,6 +987,9 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
     
     // init precise scrolling
     // requires XInput 2.1+
+    for(i32 i = 0; i < MAX_SCROLL_DEVICES; i++){
+        linuxvars.device_scroll_info[i].has_last_value = false;
+    }
     int xi_opcode, xi_firstevent, xi_firsterror;
     if (XQueryExtension(linuxvars.dpy, "XInputExtension", &xi_opcode, &xi_firstevent, &xi_firsterror)) {
         int major = 2, minor = 1; 
@@ -1499,8 +1502,8 @@ linux_handle_x11_events() {
         
         u64 event_id = (u64)event.xkey.serial << 32 | event.xkey.time;
         
-        if (event.xcookie.type == GenericEvent &&
-            event.xcookie.extension == linuxvars.xinput_opcode &&
+        if ((event.xcookie.type == GenericEvent) &&
+            (event.xcookie.extension == linuxvars.xinput_opcode) &&
             XGetEventData(linuxvars.dpy, &event.xcookie)){
             if (event.xcookie.evtype == XI_Motion) {
                 XIDeviceEvent *dev_event = (XIDeviceEvent *)event.xcookie.data;
@@ -1517,16 +1520,20 @@ linux_handle_x11_events() {
                 
                 if(si){
                     if (XIMaskIsSet(dev_event->valuators.mask, si->valuator_number)) {
-                        double raw_value = values[si->valuator_number];
-                        double delta = raw_value - si->last_value;
+                        double last_value = 0;
+                        if(si->has_last_value) last_value = si->last_value;
+                        double raw_value = values[0];
+                        double delta = raw_value - last_value;
                         si->last_value = raw_value;
+                        si->has_last_value = true;
                         
                         double scroll_units = delta / si->increment;
                         
-                        if (si->scroll_type == XIScrollTypeVertical)
+                        if (si->scroll_type == XIScrollTypeVertical){
                             printf("Vertical scroll: %.3f units\n", scroll_units);
-                        else
+                        } else if(si->scroll_type == XIScrollTypeHorizontal){
                             printf("Horizontal scroll: %.3f units\n", scroll_units);
+                        }
                     }
                 }
             }

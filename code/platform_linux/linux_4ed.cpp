@@ -157,28 +157,16 @@ struct Linux_Memory_Tracker_Node {
     u64 size;
 };
 
-/* from XInput2.h
-typedef struct
-{
-    int         type;
-    int         sourceid;
-    int         number;
-    int         scroll_type;
-    double      increment;
-    int         flags;
-} XIScrollClassInfo;
-*/
-
 struct Linux_Scroll_Info{
     int device_id;
     int valuator_number;   // from XIScrollClassInfo.number
     int scroll_type;       // from XIScrollClassInfo.scroll_type
     double increment;      // from XIScrollClassInfo.increment
-    double last_value;     // YOUR running state, not from X11 at all
-    b8 has_last_value;   // whether last_value is a valid baseline yet
+    double last_value;
+    b8 has_last_value;
 };
 
-// Arbitrary cap on scroll devices
+// NOTE(edye): Arbitrary cap on scroll devices
 #define MAX_SCROLL_DEVICES 16
 
 struct Linux_Vars {
@@ -208,8 +196,8 @@ struct Linux_Vars {
     
     b8 has_smooth_scroll;
     i32 num_scroll_devices;
-    int xinput_opcode;
-    Linux_Scroll_Info device_scroll_info[MAX_SCROLL_DEVICES];
+    int xinput_opcode; // store to check GenericEvent types
+    Linux_Scroll_Info scroll_device_info[MAX_SCROLL_DEVICES];
     
     XCursor xcursors[APP_MOUSE_CURSOR_COUNT];
     Application_Mouse_Cursor cursor;
@@ -776,10 +764,7 @@ glx_create_context(GLXFBConfig fb_config){
 
 internal void
 linux_init_scroll_devices(){
-    
-    // need to map each scroll device for precise scrolling
-    
-    // get scroll increments and valuator mappings
+    // track each scroll device for precise scrolling
     linuxvars.num_scroll_devices = 0;
     int num_devices = 0;
     XIDeviceInfo *info = XIQueryDevice(linuxvars.dpy, XIAllMasterDevices, &num_devices);
@@ -790,7 +775,7 @@ linux_init_scroll_devices(){
                     
                     XIScrollClassInfo *scroll = (XIScrollClassInfo*)info[i].classes[j];
                     
-                    Linux_Scroll_Info *si = &linuxvars.device_scroll_info[linuxvars.num_scroll_devices];
+                    Linux_Scroll_Info *si = &linuxvars.scroll_device_info[linuxvars.num_scroll_devices];
                     si->device_id = info[i].deviceid;
                     si->valuator_number = scroll->number;
                     si->scroll_type = scroll->scroll_type;
@@ -1034,9 +1019,9 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
         
         if (linuxvars.has_smooth_scroll) {
             linuxvars.has_smooth_scroll = true;
-            linuxvars.xinput_opcode = xi_opcode; // Store to identify GenericEvent types later
+            linuxvars.xinput_opcode = xi_opcode; 
             
-            // Register XI_Motion events for smooth scrolling
+            // track XI_Motion events for smooth scrolling
             XIEventMask xi_mask;
             unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
             
@@ -1047,18 +1032,19 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
             XISetMask(xi_mask.mask, XI_Motion);
             XISelectEvents(linuxvars.dpy, linuxvars.win, &xi_mask, 1);
             
-            // Register XI_HierarchyChanged events for detect when devices c
-            XIEventMask xi_hier_mask;
+            // track XI_HierarchyChanged events to detect when devices change
+            XIEventMask xi_hierarchy_mask;
             unsigned char hier_mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
             
-            xi_hier_mask.deviceid = XIAllDevices;
-            xi_hier_mask.mask_len = sizeof(hier_mask_bytes);
-            xi_hier_mask.mask = hier_mask_bytes;
+            xi_hierarchy_mask.deviceid = XIAllDevices;
+            xi_hierarchy_mask.mask_len = sizeof(hier_mask_bytes);
+            xi_hierarchy_mask.mask = hier_mask_bytes;
             
-            XISetMask(xi_hier_mask.mask, XI_HierarchyChanged);
-            XISelectEvents(linuxvars.dpy, DefaultRootWindow(linuxvars.dpy), &xi_hier_mask, 1);
+            XISetMask(xi_hierarchy_mask.mask, XI_HierarchyChanged);
+            XISelectEvents(linuxvars.dpy, DefaultRootWindow(linuxvars.dpy), &xi_hierarchy_mask, 1);
         }
     }
+    
     linux_init_scroll_devices();
     
     // init XKB keyboard extension
@@ -1544,7 +1530,7 @@ linux_handle_x11_events() {
                     
                     // find registered scroll axis
                     for (int i = 0; i < linuxvars.num_scroll_devices; i++) {
-                        Linux_Scroll_Info *si = &linuxvars.device_scroll_info[i];
+                        Linux_Scroll_Info *si = &linuxvars.scroll_device_info[i];
                         if (si->device_id != xinput_device->deviceid) continue;
                         if (si->valuator_number != v) continue;
                         
@@ -1557,7 +1543,7 @@ linux_handle_x11_events() {
                         double delta_raw = raw_value - si->last_value;
                         si->last_value = raw_value;
                         
-                        double scroll_sensitivity = 30.0; // arbitrary, could be changed to a setting
+                        double scroll_sensitivity = 30.0; // NOTE(edye): arbitrary, could be changed to a setting
                         double scroll_amount = delta_raw / si->increment * scroll_sensitivity;
                         
                         if (si->scroll_type == XIScrollTypeVertical) {
@@ -1568,6 +1554,7 @@ linux_handle_x11_events() {
                     }
                 }
             } else if (event.xcookie.evtype == XI_HierarchyChanged) {
+                // devices have been changed
                 // reinitialize the scroll devices
                 linux_init_scroll_devices();
             }

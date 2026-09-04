@@ -767,7 +767,7 @@ linux_init_scroll_devices(){
     // track each scroll device for precise scrolling
     linuxvars.num_scroll_devices = 0;
     int num_devices = 0;
-    XIDeviceInfo *info = XIQueryDevice(linuxvars.dpy, XIAllMasterDevices, &num_devices);
+    XIDeviceInfo *info = XIQueryDevice(linuxvars.dpy, XIAllDevices, &num_devices);
     for (i32 i = 0; i < num_devices; i++) {
         for (i32 j = 0; j < info[i].num_classes; j++) {
             if (info[i].classes[j]->type == XIScrollClass) {
@@ -1018,7 +1018,6 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
         linuxvars.has_smooth_scroll = query_success && (major > 2 || (major == 2 && minor >= 1));
         
         if (linuxvars.has_smooth_scroll) {
-            linuxvars.has_smooth_scroll = true;
             linuxvars.xinput_opcode = xi_opcode; 
             
             // track XI_Motion events for smooth scrolling
@@ -1512,56 +1511,6 @@ linux_handle_x11_events() {
         
         u64 event_id = (u64)event.xkey.serial << 32 | event.xkey.time;
         
-        if (linuxvars.has_smooth_scroll &&
-            (event.xcookie.type == GenericEvent) &&
-            (event.xcookie.extension == linuxvars.xinput_opcode) &&
-            XGetEventData(linuxvars.dpy, &event.xcookie)){
-            
-            if (event.xcookie.evtype == XI_Motion) {
-                XIDeviceEvent *xinput_device = (XIDeviceEvent *)event.xcookie.data;
-                double *values = xinput_device->valuators.values;
-                int value_idx = 0;
-                
-                for (int v = 0; v < xinput_device->valuators.mask_len * 8; v++) {
-                    if (!XIMaskIsSet(xinput_device->valuators.mask, v)) continue;
-                    
-                    double raw_value = values[value_idx];
-                    value_idx++;
-                    
-                    // find registered scroll axis
-                    for (int i = 0; i < linuxvars.num_scroll_devices; i++) {
-                        Linux_Scroll_Info *si = &linuxvars.scroll_device_info[i];
-                        if (si->device_id != xinput_device->deviceid) continue;
-                        if (si->valuator_number != v) continue;
-                        
-                        if (!si->has_last_value) {
-                            si->last_value = raw_value;
-                            si->has_last_value = true;
-                            return;
-                        }
-                        
-                        double delta_raw = raw_value - si->last_value;
-                        si->last_value = raw_value;
-                        
-                        double scroll_sensitivity = 30.0; // NOTE(edye): arbitrary, could be changed to a setting
-                        double scroll_amount = delta_raw / si->increment * scroll_sensitivity;
-                        
-                        if (si->scroll_type == XIScrollTypeVertical) {
-                            linuxvars.input.trans.mouse_wheel_y += scroll_amount;
-                        } else if (si->scroll_type == XIScrollTypeHorizontal) {
-                            linuxvars.input.trans.mouse_wheel_x -= scroll_amount;
-                        }
-                    }
-                }
-            } else if (event.xcookie.evtype == XI_HierarchyChanged) {
-                // devices have been changed
-                // reinitialize the scroll devices
-                linux_init_scroll_devices();
-            }
-            
-            XFreeEventData(linuxvars.dpy, &event.xcookie);
-        }
-        
         switch(event.type) {
             case KeyPress: {
                 should_step = true;
@@ -1824,6 +1773,67 @@ linux_handle_x11_events() {
                 should_step = true;
             } break;
             
+            case GenericEvent: {
+                if (linuxvars.has_smooth_scroll &&
+                    (event.xcookie.extension == linuxvars.xinput_opcode) &&
+                    XGetEventData(linuxvars.dpy, &event.xcookie)){
+                    
+                    if (event.xcookie.evtype == XI_Motion) {
+                        XIDeviceEvent *xinput_device = (XIDeviceEvent *)event.xcookie.data;
+                        
+                        { // NOTE(FS): Emulate MotionNotify as registering to XI_Motion disable those events
+                            int x = clamp(0, xinput_device->event_x, render_target.width - 1);
+                            int y = clamp(0, xinput_device->event_y, render_target.height - 1);
+                            linuxvars.input.pers.mouse = { x, y };
+                            should_step = true;
+                        }
+                        
+                        double *values = xinput_device->valuators.values;
+                        int value_idx = 0;
+                        
+                        for (int v = 0; v < xinput_device->valuators.mask_len * 8; v++) {
+                            if (!XIMaskIsSet(xinput_device->valuators.mask, v)) continue;
+                            
+                            double raw_value = values[value_idx];
+                            value_idx++;
+                            
+                            // find registered scroll axis
+                            for (int i = 0; i < linuxvars.num_scroll_devices; i++) {
+                                Linux_Scroll_Info *scroll_info = &linuxvars.scroll_device_info[i];
+                                if (scroll_info->device_id != xinput_device->deviceid) continue;
+                                if (scroll_info->valuator_number != v) continue;
+                                
+                                if (!scroll_info->has_last_value) {
+                                    scroll_info->last_value = raw_value;
+                                    scroll_info->has_last_value = true;
+                                    continue;
+                                }
+                                
+                                double delta_raw = raw_value - scroll_info->last_value;
+                                scroll_info->last_value = raw_value;
+                                
+                                double scroll_sensitivity = 30.0; // NOTE(edye): arbitrary, could be changed to a setting
+                                double scroll_amount = 0;
+                                
+                                if(scroll_info->increment != 0) scroll_amount = delta_raw / scroll_info->increment * scroll_sensitivity;
+                                
+                                if (scroll_info->scroll_type == XIScrollTypeVertical) {
+                                    linuxvars.input.trans.mouse_wheel_y += scroll_amount;
+                                } else if (scroll_info->scroll_type == XIScrollTypeHorizontal) {
+                                    linuxvars.input.trans.mouse_wheel_x -= scroll_amount;
+                                }
+                            }
+                        }
+                    } else if (event.xcookie.evtype == XI_HierarchyChanged) {
+                        // devices have been changed
+                        // reinitialize the scroll devices
+                        linux_init_scroll_devices();
+                    }
+                    
+                    XFreeEventData(linuxvars.dpy, &event.xcookie);
+                }
+            } break;
+            
             default: {
                 // clipboard update notification - ask for the new content
                 if (event.type == linuxvars.xfixes_selection_event) {
@@ -1836,9 +1846,7 @@ linux_handle_x11_events() {
                                           linuxvars.win,
                                           CurrentTime);
                     }
-                }
-                
-                else if(event.type == linuxvars.xkb_event) {
+                } else if(event.type == linuxvars.xkb_event) {
                     XkbEvent* kb = (XkbEvent*)&event;
                     
                     // Keyboard layout changed, refresh lookup table.
@@ -1848,6 +1856,7 @@ linux_handle_x11_events() {
                         linux_keycode_init(linuxvars.dpy);
                     }
                 }
+                
             } break;
         }
     }

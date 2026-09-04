@@ -91,6 +91,7 @@
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>
 #include <X11/extensions/Xfixes.h>
+#include <X11/extensions/XInput2.h>
 #include <X11/XKBlib.h>
 #include <X11/keysym.h>
 #define function static
@@ -131,7 +132,8 @@ struct Linux_Input_Chunk_Transient {
     b8 mouse_l_release;
     b8 mouse_r_press;
     b8 mouse_r_release;
-    i8 mouse_wheel;
+    i8 mouse_wheel_y;
+    i8 mouse_wheel_x;
     b8 trying_to_kill;
 };
 
@@ -154,6 +156,18 @@ struct Linux_Memory_Tracker_Node {
     String_Const_u8 location;
     u64 size;
 };
+
+struct Linux_Scroll_Info{
+    int device_id;
+    int valuator_number;   // from XIScrollClassInfo.number
+    int scroll_type;       // from XIScrollClassInfo.scroll_type
+    double increment;      // from XIScrollClassInfo.increment
+    double last_value;
+    b8 has_last_value;
+};
+
+// NOTE(edye): Arbitrary cap on scroll devices
+#define MAX_SCROLL_DEVICES 16
 
 struct Linux_Vars {
     Thread_Context tctx;
@@ -179,6 +193,11 @@ struct Linux_Vars {
     int epoll;
     int step_timer_fd;
     u64 last_step_time;
+    
+    b8 has_smooth_scroll;
+    i32 num_scroll_devices;
+    int xinput_opcode; // store to check GenericEvent types
+    Linux_Scroll_Info scroll_device_info[MAX_SCROLL_DEVICES];
     
     XCursor xcursors[APP_MOUSE_CURSOR_COUNT];
     Application_Mouse_Cursor cursor;
@@ -744,6 +763,34 @@ glx_create_context(GLXFBConfig fb_config){
 ////////////////////////////
 
 internal void
+linux_init_scroll_devices(){
+    // track each scroll device for precise scrolling
+    linuxvars.num_scroll_devices = 0;
+    int num_devices = 0;
+    XIDeviceInfo *info = XIQueryDevice(linuxvars.dpy, XIAllDevices, &num_devices);
+    for (i32 i = 0; i < num_devices; i++) {
+        for (i32 j = 0; j < info[i].num_classes; j++) {
+            if (info[i].classes[j]->type == XIScrollClass) {
+                if(linuxvars.num_scroll_devices < MAX_SCROLL_DEVICES){
+                    
+                    XIScrollClassInfo *scroll = (XIScrollClassInfo*)info[i].classes[j];
+                    
+                    Linux_Scroll_Info *si = &linuxvars.scroll_device_info[linuxvars.num_scroll_devices];
+                    si->device_id = info[i].deviceid;
+                    si->valuator_number = scroll->number;
+                    si->scroll_type = scroll->scroll_type;
+                    si->increment = scroll->increment;
+                    si->has_last_value = false;
+                    
+                    linuxvars.num_scroll_devices++;
+                }
+            }
+        }
+    }
+    if (info) XIFreeDeviceInfo(info);
+}
+
+internal void
 linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
     
     Display* dpy = XOpenDisplay(0);
@@ -961,6 +1008,43 @@ linux_x11_init(int argc, char** argv, Plat_Settings* settings) {
         | xim_event_mask;
     
     XSelectInput(linuxvars.dpy, linuxvars.win, event_mask);
+    
+    // init smooth scrolling
+    
+    int xi_opcode, xi_firstevent, xi_firsterror;
+    if (XQueryExtension(linuxvars.dpy, "XInputExtension", &xi_opcode, &xi_firstevent, &xi_firsterror)) {
+        int major = 2, minor = 1; 
+        b8 query_success = (XIQueryVersion(linuxvars.dpy, &major, &minor) == Success);
+        linuxvars.has_smooth_scroll = query_success && (major > 2 || (major == 2 && minor >= 1));
+        
+        if (linuxvars.has_smooth_scroll) {
+            linuxvars.xinput_opcode = xi_opcode; 
+            
+            // track XI_Motion events for smooth scrolling
+            XIEventMask xi_mask;
+            unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+            
+            xi_mask.deviceid = XIAllMasterDevices;
+            xi_mask.mask_len = sizeof(mask_bytes);
+            xi_mask.mask = mask_bytes;
+            
+            XISetMask(xi_mask.mask, XI_Motion);
+            XISelectEvents(linuxvars.dpy, linuxvars.win, &xi_mask, 1);
+            
+            // track XI_HierarchyChanged events to detect when devices change
+            XIEventMask xi_hierarchy_mask;
+            unsigned char hier_mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+            
+            xi_hierarchy_mask.deviceid = XIAllDevices;
+            xi_hierarchy_mask.mask_len = sizeof(hier_mask_bytes);
+            xi_hierarchy_mask.mask = hier_mask_bytes;
+            
+            XISetMask(xi_hierarchy_mask.mask, XI_HierarchyChanged);
+            XISelectEvents(linuxvars.dpy, DefaultRootWindow(linuxvars.dpy), &xi_hierarchy_mask, 1);
+        }
+    }
+    
+    linux_init_scroll_devices();
     
     // init XKB keyboard extension
     
@@ -1580,11 +1664,28 @@ linux_handle_x11_events() {
                     } break;
                     
                     case Button4: {
-                        linuxvars.input.trans.mouse_wheel = -100;
+                        if(!linuxvars.has_smooth_scroll) {
+                            linuxvars.input.trans.mouse_wheel_y = -100;
+                        }
                     } break;
                     
                     case Button5: {
-                        linuxvars.input.trans.mouse_wheel = +100;
+                        if(!linuxvars.has_smooth_scroll) {
+                            linuxvars.input.trans.mouse_wheel_y = +100;
+                        }
+                    } break;
+                    
+                    // NOTE(FS): 6 and 7 are undocumented but generally accepted as horizontal scroll buttons.
+                    case 6: {
+                        if(!linuxvars.has_smooth_scroll) {
+                            linuxvars.input.trans.mouse_wheel_x = -100;                            
+                        }
+                    } break;
+                    
+                    case 7: {
+                        if(!linuxvars.has_smooth_scroll) {
+                            linuxvars.input.trans.mouse_wheel_x = +100;
+                        }
                     } break;
                 }
             } break;
@@ -1672,6 +1773,67 @@ linux_handle_x11_events() {
                 should_step = true;
             } break;
             
+            case GenericEvent: {
+                if (linuxvars.has_smooth_scroll &&
+                    (event.xcookie.extension == linuxvars.xinput_opcode) &&
+                    XGetEventData(linuxvars.dpy, &event.xcookie)){
+                    
+                    if (event.xcookie.evtype == XI_Motion) {
+                        XIDeviceEvent *xinput_device = (XIDeviceEvent *)event.xcookie.data;
+                        
+                        { // NOTE(FS): Emulate MotionNotify as registering to XI_Motion disable those events
+                            int x = clamp(0, xinput_device->event_x, render_target.width - 1);
+                            int y = clamp(0, xinput_device->event_y, render_target.height - 1);
+                            linuxvars.input.pers.mouse = { x, y };
+                            should_step = true;
+                        }
+                        
+                        double *values = xinput_device->valuators.values;
+                        int value_idx = 0;
+                        
+                        for (int v = 0; v < xinput_device->valuators.mask_len * 8; v++) {
+                            if (!XIMaskIsSet(xinput_device->valuators.mask, v)) continue;
+                            
+                            double raw_value = values[value_idx];
+                            value_idx++;
+                            
+                            // find registered scroll axis
+                            for (int i = 0; i < linuxvars.num_scroll_devices; i++) {
+                                Linux_Scroll_Info *scroll_info = &linuxvars.scroll_device_info[i];
+                                if (scroll_info->device_id != xinput_device->deviceid) continue;
+                                if (scroll_info->valuator_number != v) continue;
+                                
+                                if (!scroll_info->has_last_value) {
+                                    scroll_info->last_value = raw_value;
+                                    scroll_info->has_last_value = true;
+                                    continue;
+                                }
+                                
+                                double delta_raw = raw_value - scroll_info->last_value;
+                                scroll_info->last_value = raw_value;
+                                
+                                double scroll_sensitivity = 30.0; // NOTE(edye): arbitrary, could be changed to a setting
+                                double scroll_amount = 0;
+                                
+                                if(scroll_info->increment != 0) scroll_amount = delta_raw / scroll_info->increment * scroll_sensitivity;
+                                
+                                if (scroll_info->scroll_type == XIScrollTypeVertical) {
+                                    linuxvars.input.trans.mouse_wheel_y += scroll_amount;
+                                } else if (scroll_info->scroll_type == XIScrollTypeHorizontal) {
+                                    linuxvars.input.trans.mouse_wheel_x -= scroll_amount;
+                                }
+                            }
+                        }
+                    } else if (event.xcookie.evtype == XI_HierarchyChanged) {
+                        // devices have been changed
+                        // reinitialize the scroll devices
+                        linux_init_scroll_devices();
+                    }
+                    
+                    XFreeEventData(linuxvars.dpy, &event.xcookie);
+                }
+            } break;
+            
             default: {
                 // clipboard update notification - ask for the new content
                 if (event.type == linuxvars.xfixes_selection_event) {
@@ -1684,9 +1846,7 @@ linux_handle_x11_events() {
                                           linuxvars.win,
                                           CurrentTime);
                     }
-                }
-                
-                else if(event.type == linuxvars.xkb_event) {
+                } else if(event.type == linuxvars.xkb_event) {
                     XkbEvent* kb = (XkbEvent*)&event;
                     
                     // Keyboard layout changed, refresh lookup table.
@@ -1696,6 +1856,7 @@ linux_handle_x11_events() {
                         linux_keycode_init(linuxvars.dpy);
                     }
                 }
+                
             } break;
         }
     }
@@ -1991,7 +2152,8 @@ main(int argc, char **argv){
         input.mouse.release_l = linuxvars.input.trans.mouse_l_release;
         input.mouse.press_r = linuxvars.input.trans.mouse_r_press;
         input.mouse.release_r = linuxvars.input.trans.mouse_r_release;
-        input.mouse.wheel = linuxvars.input.trans.mouse_wheel;
+        input.mouse.wheel.y = linuxvars.input.trans.mouse_wheel_y;
+        input.mouse.wheel.x = linuxvars.input.trans.mouse_wheel_x;
         
         // NOTE(allen): Application Core Update
         Application_Step_Result result = {};

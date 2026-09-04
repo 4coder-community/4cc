@@ -252,7 +252,7 @@ void build(
     }
     
     if (flags.opts & LIBS) {
-        fm_add_to_line(line, "-lX11 -lpthread -lm -lrt -lGL -ldl -lXfixes -lfreetype -lfontconfig");
+        fm_add_to_line(line, "-lX11 -lpthread -lm -lrt -lGL -ldl -lXfixes -lXi -lfreetype -lfontconfig");
     }
 
     fm_finish_build_line(&line);

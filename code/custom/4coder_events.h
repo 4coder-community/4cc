@@ -89,6 +89,10 @@ struct Input_Event{
                     String_Const_u8_Array flag_strings;
                     String_Const_u8_Array file_names;
                 };
+                struct {
+                    List_String_Const_u8 dropfiles; 
+                    Vec2_f32 pos;
+                };
             };
         } core;
         Custom_Command_Function *custom_func;
@@ -123,6 +127,7 @@ enum{
     EventProperty_Exit           = 0x1000,
     EventProperty_Clipboard      = 0x2000,
     EventProperty_CustomFunction = 0x4000,
+    EventProperty_DropFiles      = 0x8000,
 };
 enum{
     EventPropertyGroup_AnyKeyboardEvent =
@@ -145,7 +150,8 @@ enum{
         EventProperty_Startup|
         EventProperty_Exit|
         EventProperty_Clipboard|
-        EventProperty_Animate,
+        EventProperty_Animate|
+        EventProperty_DropFiles,
     EventPropertyGroup_Any =
         EventPropertyGroup_AnyUserInput|
         EventPropertyGroup_AnyCore|

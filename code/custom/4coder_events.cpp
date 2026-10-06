@@ -273,6 +273,11 @@ get_event_properties(Input_Event *event){
                 {
                     flags |= EventProperty_Clipboard;
                 }break;
+                
+                case CoreCode_NewDropFiles: 
+                {
+                    flags |= EventProperty_DropFiles;
+                } break;
             }
         }break;
         

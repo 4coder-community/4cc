@@ -1486,6 +1486,40 @@ win32_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
             win32vars.got_useful_event = true;
         }break;
         
+        case WM_CREATE: 
+        {
+            DragAcceptFiles(hwnd, 1);
+        } break; 
+        
+        case WM_DROPFILES:
+        {
+#pragma comment(lib, "Shell32.lib")
+            
+            HDROP drop = (HDROP)wParam;
+            POINT drop_pt = {0};
+            DragQueryPoint(drop, &drop_pt);
+            u64 num_files_dropped = DragQueryFile(drop, 0xffffffff, 0, 0);
+            
+            List_String_Const_u8 list = {0};
+            for(u64 idx = 0; idx < num_files_dropped; idx += 1)
+            {
+                UINT name_size = DragQueryFile(drop, (UINT)idx, 0, 0) + 1;
+                u16 *name_ptr = push_array(&win32vars.frame_arena, u16, name_size);
+                DragQueryFile(drop, (UINT)idx, (wchar_t *)name_ptr, name_size);
+                
+                String_Const_u16 path_string = SCu16(name_ptr, (u64)name_size-1);
+                String_u8 path_string_u8 = string_u8_from_string_u16(&win32vars.frame_arena, path_string, StringFill_NoTerminate);
+                string_list_push(&win32vars.frame_arena, &list, path_string_u8.string);
+            }
+            DragFinish(drop);
+            
+            Input_Event *event = push_input_event(&win32vars.frame_arena, &win32vars.input_chunk.trans.event_list);
+            event->kind = InputEventKind_Core;
+            event->core.code = CoreCode_NewDropFiles;
+            event->core.pos = V2f32((f32)drop_pt.x, (f32)drop_pt.y);
+            event->core.dropfiles = list;
+        }break;
+        
         case WM_4coder_ANIMATE:
         {
             win32vars.got_useful_event = true;

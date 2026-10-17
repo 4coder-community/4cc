@@ -595,14 +595,13 @@ setup_essential_mapping(Mapping *mapping, i64 global_id, i64 file_id, i64 code_i
     ParentMap(global_id);
     BindTextInput(write_text_input);
     BindMouse(click_set_cursor_and_mark, MouseCode_Left);
-    //BindMouseRelease(click_set_cursor, MouseCode_Left);
+    BindMouseRelease(click_set_cursor, MouseCode_Left);
     BindCore(click_set_cursor_and_mark, CoreCode_ClickActivateView);
     BindMouseMove(click_set_cursor_if_lbutton);
 
     SelectMap(code_id);
     ParentMap(file_id);
     BindTextInput(write_text_and_auto_indent);
-
 }
 
 function void

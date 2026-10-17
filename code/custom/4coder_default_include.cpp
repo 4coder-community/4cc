@@ -141,6 +141,7 @@
 #include "4coder_variables.cpp"
 #include "4coder_audio.cpp"
 #include "4coder_search_list.cpp"
+#include "4coder_dropfiles.cpp"
 
 #include "4coder_examples.cpp"
 

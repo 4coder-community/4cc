@@ -163,6 +163,7 @@ make_core_list(Arena *arena){
     add_code(arena, &list, string_u8_litexpr("TryExit"));
     add_code(arena, &list, string_u8_litexpr("FileExternallyModified"));
     add_code(arena, &list, string_u8_litexpr("NewClipboardContents"));
+    add_code(arena, &list, string_u8_litexpr("NewDropFiles"));
     return(list);
 }
 

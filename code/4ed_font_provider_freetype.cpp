@@ -1,11 +1,11 @@
 /*
- * Mr. 4th Dimention - Allen Webster
- *
- * 18.07.2017
- *
- * Freetype implementation of the font provider interface.
- *
- */
+* Mr. 4th Dimention - Allen Webster
+*
+* 18.07.2017
+*
+* Freetype implementation of the font provider interface.
+*
+*/
 
 // TOP
 
@@ -30,76 +30,6 @@ ft__load_flags(b32 use_hinting){
     return(ft_flags);
 }
 
-internal FT_Codepoint_Index_Pair_Array
-ft__get_codepoint_index_pairs(Arena *arena, FT_Face face, u16 *maximum_index_out){
-    FT_Long glyph_count = face->num_glyphs;
-    
-    FT_Codepoint_Index_Pair_Array array = {};
-    array.count = glyph_count;
-    array.vals = push_array(arena, FT_Codepoint_Index_Pair, glyph_count);
-    
-    u16 maximum_index = 0;
-    
-    i32 counter = 0;
-    FT_UInt index = 0;
-    FT_ULong codepoint = FT_Get_First_Char(face, &index);
-    array.vals[counter].codepoint = codepoint;
-    array.vals[counter].index = (u16)index;
-    maximum_index = Max(maximum_index, (u16)index);
-    counter += 1;
-    for (;;){
-        codepoint = FT_Get_Next_Char(face, codepoint, &index);
-        array.vals[counter].codepoint = codepoint;
-        array.vals[counter].index = (u16)index;
-        maximum_index = Max(maximum_index, (u16)index);
-        counter += 1;
-        if (counter == glyph_count){
-            break;
-        }
-    }
-    
-    *maximum_index_out = maximum_index;
-    
-    return(array);
-}
-
-internal Codepoint_Index_Map
-ft__get_codepoint_index_map(Base_Allocator *base_allocator, FT_Face face){
-    FT_Long glyph_count = face->num_glyphs;
-    
-    Codepoint_Index_Map map = {};
-    map.zero_index = max_u16;
-    map.table = make_table_u32_u16(base_allocator, glyph_count*4);
-    
-    u16 maximum_index = 0;
-    
-    i32 counter = 0;
-    FT_UInt index = 0;
-    FT_ULong codepoint = FT_Get_First_Char(face, &index);
-    table_insert(&map.table, (u32)codepoint, (u16)index);
-    maximum_index = Max(maximum_index, (u16)index);
-    counter += 1;
-    for (;;){
-        codepoint = FT_Get_Next_Char(face, codepoint, &index);
-        if (codepoint == 0){
-            map.has_zero_index = true;
-            map.zero_index = (u16)(index);
-        }
-        else{
-            table_insert(&map.table, (u32)codepoint, (u16)index);
-        }
-        maximum_index = Max(maximum_index, (u16)index);
-        counter += 1;
-        if (counter == glyph_count){
-            break;
-        }
-    }
-    
-    map.max_index = maximum_index;
-    
-    return(map);
-}
-
 struct Bad_Rect_Pack{
     Vec2_i32 max_dim;
     Vec3_i32 dim;
@@ -107,295 +37,292 @@ struct Bad_Rect_Pack{
     i32 current_line_h;
 };
 
-internal void
-ft__bad_rect_pack_init(Bad_Rect_Pack *pack, Vec2_i32 max_dim){
-    pack->max_dim = max_dim;
-    pack->dim = V3i32(0, 0, 1);
-    pack->p = V3i32(0, 0, 0);
-    pack->current_line_h = 0;
-}
-
-internal void
-ft__bad_rect_pack_end_line(Bad_Rect_Pack *pack){
-    pack->p.y += pack->current_line_h;
-    pack->dim.y = Max(pack->dim.y, pack->p.y);
-    pack->current_line_h = 0;
-    pack->p.x = 0;
-}
-
-internal Vec3_i32
-ft__bad_rect_pack_next(Bad_Rect_Pack *pack, Vec2_i32 dim){
-    
-    Vec3_i32 result = { };
-    
-    // NOTE(simon, 28/02/24): Does this character fit in the texture if it's the only character ?
-    if ( dim.x <= pack->max_dim.x && dim.y <= pack->max_dim.y ){
-        
-        b8 end_line = false;
-        
-        if ( pack->p.x + dim.x > pack->max_dim.x ) {
-            // NOTE(simon, 28/02/24): Can't fit the character horizontally.
-            end_line = true;
-        }
-        
-        if ( pack->current_line_h < dim.y && pack->p.y + dim.y > pack->max_dim.y ) {
-            // NOTE(simon, 28/02/24): Character doesn't fit in the current line height, AND we
-            // can't grow the line height.
-            end_line = true;
-        }
-        
-        if ( end_line ) {
-            ft__bad_rect_pack_end_line( pack );
-        }
-        
-        if ( pack->p.y + dim.y > pack->max_dim.y ) {
-            Assert( end_line );
-            // NOTE(simon, 28/02/24): We ended a line. There isn't enough space on a new line to
-            // fit the character vertically. We need to go to the next texture in the array.
-            // In a new texture the character is guaranteed to fit, because of the outer most if.
-            pack->p.y = 0;
-            pack->dim.z += 1;
-            pack->p.z += 1;
-            
-            // NOTE(simon, 28/02/24): There are no checks on the z axis range, but texture arrays
-            // have a limit. At the moment it's 2048 on both OpenGL and DirectX.
-        }
-        
-        // NOTE(simon, 28/02/24): We are now sure that the character will fit.
-        pack->current_line_h = Max(pack->current_line_h, dim.y);
-        
-            result = pack->p;
-            pack->p.x += dim.x;
-        pack->dim.x = Max( pack->dim.x, pack->p.x );
-        }
-    
-    return(result);
-}
-
-internal void
-ft__bad_rect_store_finish(Bad_Rect_Pack *pack){
-    ft__bad_rect_pack_end_line(pack);
-}
-
-internal void
-ft__glyph_bounds_store_uv_raw(Vec3_i32 p, Vec2_i32 dim, Glyph_Bounds *bounds){
-    bounds->uv = Rf32((f32)p.x, (f32)p.y, (f32)dim.x, (f32)dim.y);
-    bounds->w = (f32)p.z;
-}
-
-internal Face*
-ft__font_make_face(Arena *arena, Face_Description *description, f32 scale_factor){
-    String_Const_u8 file_name = push_string_copy(arena, description->font.file_name);
-    
-    FT_Library ft;
-    FT_Init_FreeType(&ft);
-    
-    FT_Face ft_face;
-    FT_Error error = FT_New_Face(ft, (char*)file_name.str, 0, &ft_face);
-    
-    Face *face = 0;
-    if (error == 0){
-        face = push_array_zero(arena, Face, 1);
-        
-        u32 pt_size_unscaled = Max(description->parameters.pt_size, 8);
-        u32 pt_size = (u32)(pt_size_unscaled*scale_factor);
-        b32 hinting = description->parameters.hinting;
-        
-        FT_Size_RequestRec_ size = {};
-        size.type   = FT_SIZE_REQUEST_TYPE_NOMINAL;
-        size.height = (pt_size << 6);
-        FT_Request_Size(ft_face, &size);
-        
-        face->description.font.file_name = file_name;
-        face->description.parameters = description->parameters;
-        
-        Face_Metrics *met = &face->metrics;
-        
-        met->max_advance = f32_ceil32(ft_face->size->metrics.max_advance/64.f);
-        met->ascent      = f32_ceil32(ft_face->size->metrics.ascender/64.f);
-        met->descent     = f32_floor32(ft_face->size->metrics.descender/64.f);
-        met->text_height = f32_ceil32(ft_face->size->metrics.height/64.f);
-        met->line_skip   = met->text_height - (met->ascent - met->descent);
-        met->line_skip   = clamp_bot(1.f, met->line_skip);
-        met->line_height = met->text_height + met->line_skip;
-        
+// NOTE(long): Similar to mrmxier's ft__bad_rect_pack_next, but simplified into one function
+// It could be inlined into ft__font_make_face, but I’m keeping it generic for future reuse
+internal Vec3_i32 BRP_Pack(Bad_Rect_Pack* pack, Vec2_i32 dim)
+{
+    Vec3_i32 p = {};
+    if (dim.x <= pack->max_dim.x && dim.y <= pack->max_dim.y)
+    {
+        if (pack->p.x + dim.x > pack->max_dim.x)
         {
-            f32 real_over_notional = met->line_height/(f32)ft_face->height;
-            f32 relative_center = -1.f*real_over_notional*ft_face->underline_position;
-            f32 relative_thickness = real_over_notional*ft_face->underline_thickness;
-            
-            f32 center    = f32_floor32(met->ascent + relative_center);
-            f32 thickness = clamp_bot(1.f, relative_thickness);
-            
-            met->underline_yoff1 = center - thickness*0.5f;
-            met->underline_yoff2 = center + thickness*0.5f;
+            pack->p.x = 0;
+            pack->p.y += pack->current_line_h;
+            pack->current_line_h = 0;
         }
         
-        face->advance_map.codepoint_to_index =
-            ft__get_codepoint_index_map(arena->base_allocator, ft_face);
-        u16 index_count =
-            codepoint_index_map_count(&face->advance_map.codepoint_to_index);
-        face->advance_map.index_count = index_count;
-        face->advance_map.advance = push_array_zero(arena, f32, index_count);
-        face->bounds = push_array(arena, Glyph_Bounds, index_count);
-        
-        Temp_Memory_Block temp_memory(arena);
-        struct Bitmap{
-            Vec2_i32 dim;
-            u8 *data;
-        };
-        Bitmap *glyph_bitmaps = push_array(arena, Bitmap, index_count);
-        
-        u32 load_flags = ft__load_flags(hinting);
-        for (u16 i = 0; i < index_count; i += 1){
-            Bitmap *bitmap = &glyph_bitmaps[i];
-            
-            error = FT_Load_Glyph(ft_face, i, load_flags);
-            if (error == 0){
-                FT_GlyphSlot ft_glyph = ft_face->glyph;
-                Vec2_i32 dim = V2i32(ft_glyph->bitmap.width, ft_glyph->bitmap.rows);
-                bitmap->dim = dim;
-                bitmap->data = push_array(arena, u8, dim.x*dim.y);
-                
-                face->bounds[i].xy_off.x0 = (f32)(ft_face->glyph->bitmap_left);
-                face->bounds[i].xy_off.y0 = (f32)(met->ascent - ft_face->glyph->bitmap_top);
-                face->bounds[i].xy_off.x1 = (f32)(face->bounds[i].xy_off.x0 + dim.x);
-                face->bounds[i].xy_off.y1 = (f32)(face->bounds[i].xy_off.y0 + dim.y);
-                
-                switch (ft_glyph->bitmap.pixel_mode){
-                    case FT_PIXEL_MODE_MONO:
-                    {
-                        NotImplemented;
-                    }break;
-                    
-                    case FT_PIXEL_MODE_GRAY:
-                    {
-                        b32 aa_1bit_mono = (description->parameters.aa_mode == FaceAntialiasingMode_1BitMono);
-                        
-                        u8 *src_line = ft_glyph->bitmap.buffer;
-                        if (ft_glyph->bitmap.pitch < 0){
-                            src_line = ft_glyph->bitmap.buffer + (-ft_glyph->bitmap.pitch)*(dim.y - 1);
-                        }
-                        u8 *dst = bitmap->data;
-                        for (i32 y = 0; y < dim.y; y += 1){
-                            u8 *src_pixel = src_line;
-                            for (i32 x = 0; x < dim.x; x += 1){
-                                if (aa_1bit_mono){
-                                    u8 s = *src_pixel;
-                                    if (s > 0){
-                                        s = 255;
-                                    }
-                                    *dst = s;
-                                }
-                                else{
-                                    *dst = *src_pixel;
-                                }
-                                dst += 1;
-                                src_pixel += 1;
-                            }
-                            src_line += ft_glyph->bitmap.pitch;
-                        }
-                    }break;
-                    
-                    default:
-                    {
-                        NotImplemented;
-                    }break;
-                }
-                
-                face->advance_map.advance[i] = f32_ceil32(ft_glyph->advance.x/64.0f);
-            }
+        if (pack->p.y + dim.y > pack->max_dim.y)
+        {
+            pack->p = V3i32(0, 0, pack->p.z+1);
+            pack->current_line_h = 0;
         }
         
-        u8 white_data[16] = {
-            0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF, 0xFF,
-            0xFF, 0xFF, 0xFF, 0xFF,
-        };
+        p = pack->p;
+        pack->p.x += dim.x;
         
-        Bitmap white = {};
-        white.dim = V2i32(4, 4);
-        white.data = white_data;
-        
-        Bad_Rect_Pack pack = {};
-        ft__bad_rect_pack_init(&pack, V2i32(1024, 1024));
-        ft__glyph_bounds_store_uv_raw(ft__bad_rect_pack_next(&pack, white.dim), white.dim, &face->white);
-        for (u16 i = 0; i < index_count; i += 1){
-            Vec2_i32 dim = glyph_bitmaps[i].dim;
-            ft__glyph_bounds_store_uv_raw(ft__bad_rect_pack_next(&pack, dim), dim, &face->bounds[i]);
-        }
-        ft__bad_rect_store_finish(&pack);
-        
-        Texture_Kind texture_kind = TextureKind_Mono;
-        u32 texture = graphics_get_texture(pack.dim, texture_kind);
-        
-        /* NOTE simon (06/01/25): This assumes that every platforms don't use 0 as a valid texture id.
-        This is valid for OpenGL and the DX11 implementaion. Someone needs to check the MAC versions. */
-        if (texture != 0 ){
-            
-            face->texture_kind = texture_kind;
-            face->texture = texture;
-            
-            Vec3_f32 texture_dim = V3f32(pack.dim);
-            face->texture_dim = texture_dim;
-            
+        pack->current_line_h = Max(pack->current_line_h, dim.y);
+        pack->dim.x = Max(pack->dim.x, pack->p.x);
+        pack->dim.y = Max(pack->dim.y, pack->p.y + pack->current_line_h);
+        pack->dim.z = pack->p.z + 1;
+    }
+    return p;
+}
+
+// NOTE(long): 4coder doesn't provide a straightforward way to load a file
+// The closest option is dump_file (4coder_helper.cpp), but it relies on the CRT
+// On top of that, it can't be used here because of the F****** STUPID include order
+internal String8 SysOpenFile(Arena* arena, char* name)
+{
+    String8 result = {};
+    Plat_Handle handle = {};
+    
+    if (system_load_handle(arena, name, &handle))
+    {
+        File_Attributes attributes = system_load_attributes(handle);
+        u8* data = push_array(arena, u8, attributes.size);
+        if (data)
+        {
+            if (system_load_file(handle, (char*)data, (u32)attributes.size))
             {
-                Vec3_i32 p = V3i32((i32)face->white.uv.x0, (i32)face->white.uv.y0, (i32)face->white.w);
-                Vec3_i32 dim = V3i32(white.dim.x, white.dim.y, 1);
-                graphics_fill_texture(texture_kind, texture, p, dim, white.data);
-                face->white.uv.x1 = (face->white.uv.x0 + face->white.uv.x1)/texture_dim.x;
-                face->white.uv.y1 = (face->white.uv.y0 + face->white.uv.y1)/texture_dim.y;
-                face->white.uv.x0 =  face->white.uv.x0/texture_dim.x;
-                face->white.uv.y0 =  face->white.uv.y0/texture_dim.y;
+                system_load_close(handle);
+                result = SCu8(data, attributes.size);
             }
-            
-            for (u16 i = 0; i < index_count; i += 1){
-                Vec3_i32 p = V3i32((i32)face->bounds[i].uv.x0, (i32)face->bounds[i].uv.y0, (i32)face->bounds[i].w);
-                Vec3_i32 dim = V3i32(glyph_bitmaps[i].dim.x, glyph_bitmaps[i].dim.y, 1);
-                graphics_fill_texture(texture_kind, texture, p, dim, glyph_bitmaps[i].data);
-                face->bounds[i].uv.x1 = (face->bounds[i].uv.x0 + face->bounds[i].uv.x1)/texture_dim.x;
-                face->bounds[i].uv.y1 = (face->bounds[i].uv.y0 + face->bounds[i].uv.y1)/texture_dim.y;
-                face->bounds[i].uv.x0 =  face->bounds[i].uv.x0/texture_dim.x;
-                face->bounds[i].uv.y0 =  face->bounds[i].uv.y0/texture_dim.y;
-            }
-            
-            {
-                Face_Advance_Map *advance_map = &face->advance_map;
-                
-                met->space_advance = font_get_glyph_advance(advance_map, met, ' ', 0);
-                met->decimal_digit_advance =
-                    font_get_max_glyph_advance_range(advance_map, met, '0', '9', 0);
-                met->hex_digit_advance =
-                    font_get_max_glyph_advance_range(advance_map, met, 'A', 'F', 0);
-                met->hex_digit_advance =
-                    Max(met->hex_digit_advance, met->decimal_digit_advance);
-                met->byte_sub_advances[0] =
-                    font_get_glyph_advance(advance_map, met, '\\', 0);
-                met->byte_sub_advances[1] = met->hex_digit_advance;
-                met->byte_sub_advances[2] = met->hex_digit_advance;
-                met->byte_advance =
-                    met->byte_sub_advances[0] +
-                    met->byte_sub_advances[1] +
-                    met->byte_sub_advances[2];
-                met->normal_lowercase_advance =
-                    font_get_average_glyph_advance_range(advance_map, met, 'a', 'z', 0);
-                met->normal_uppercase_advance =
-                    font_get_average_glyph_advance_range(advance_map, met, 'A', 'Z', 0);
-                met->normal_advance = (26*met->normal_lowercase_advance +
-                                       26*met->normal_uppercase_advance +
-                                       10*met->decimal_digit_advance)/62.f;
-            }
-            
-        } else {
-            pop_array(arena, Face, 1);
-            face = 0;
+            else pop_array(arena, u8, attributes.size);
         }
     }
     
-    FT_Done_FreeType(ft);
+    return result;
+}
+
+internal Face* ft__font_make_face(Arena* arena, Face_Description* description, f32 scale_factor)
+{
+    Arena scratch = make_arena_system();
+    Temp_Memory temp = begin_temp(arena);
+    String8 file_name = push_string_copy(arena, description->font.file_name);
+    b32 error = 0;
     
-    return(face);
+    //- NOTE(long): FreeType Init
+    FT_Library ft = {};
+    FT_Error init_error = FT_Init_FreeType(&ft);
+    error = init_error;
+    
+    FT_Face ft_face = {};
+    if (!error)
+    {
+        FT_Open_Args args = {0};
+        args.flags = FT_OPEN_MEMORY;
+        
+        String8 data = SysOpenFile(&scratch, (char*)file_name.str);
+        args.memory_base = data.str;
+        args.memory_size = (FT_Long)data.size;
+        error = FT_Open_Face(ft, &args, 0, &ft_face);
+    }
+    
+    //- NOTE(long): Sizing
+    if (!error)
+    {
+        FT_F26Dot6 char_size = description->parameters.pt_size << 6;
+        FT_UInt dpi = (FT_UInt)(scale_factor * 96.f);
+        error = FT_Set_Char_Size(ft_face, char_size, char_size, dpi, dpi);
+    }
+    
+    //- NOTE(long): Face Init
+    Face* face = 0;
+    if (!error)
+    {
+        face = push_array_zero(arena, Face, 1);
+        face->description.font.file_name = file_name;
+        face->description.parameters = description->parameters;
+    }
+    
+    //- NOTE(long): Metrics Calculation
+    Face_Metrics* met = &face->metrics;
+    if (!error)
+    {
+        met->text_height =  f32_ceil32(ft_face->size->metrics.height     /64.f);
+        met->ascent      =  f32_ceil32(ft_face->size->metrics.ascender   /64.f);
+        met->descent     = f32_floor32(ft_face->size->metrics.descender  /64.f);
+        met->max_advance =  f32_ceil32(ft_face->size->metrics.max_advance/64.f);
+        met->line_skip   = clamp_bot(1.f, met->text_height - (met->ascent - met->descent));
+        met->line_height = met->text_height + met->line_skip;
+        
+        f32 real_over_notional = met->line_height/(f32)ft_face->height;
+        f32 relative_center = -1.f*real_over_notional*ft_face->underline_position;
+        f32 relative_thickness = real_over_notional*ft_face->underline_thickness;
+        f32 center    = f32_floor32(met->ascent + relative_center);
+        f32 thickness = clamp_bot(1.f, relative_thickness);
+        met->underline_yoff1 = center - thickness*0.5f;
+        met->underline_yoff2 = center + thickness*0.5f;
+    }
+    
+    struct Bitmap
+    {
+        FT_UInt glyph_index;
+        Vec2_i32 dim;
+        u8* data;
+    };
+    Bitmap* bitmaps = 0;
+    Face_Advance_Map* advance_map = &face->advance_map;
+    
+    //- NOTE(long): Codepoint -> Glyph
+    u16 index_count = 0;
+    if (!error)
+    {
+        Codepoint_Index_Map map = {};
+        map.zero_index = max_u16;
+        map.table = make_table_u32_u16(arena->base_allocator, ft_face->num_glyphs * 2);
+        // TODO(long): Small memory waste: the actual size should be index_count
+        bitmaps = push_array_zero(&scratch, Bitmap, ft_face->num_glyphs);
+        
+        for (FT_UInt index = 0, codepoint = FT_Get_First_Char(ft_face, &index); index != 0;
+             codepoint = FT_Get_Next_Char(ft_face, codepoint, &index))
+        {
+            u16 val = index_count++;
+            bitmaps[val].glyph_index = index;
+            
+            // NOTE(long): Insert the current index rather than the glyph index
+            if (codepoint == 0)
+            {
+                map.has_zero_index = 1;
+                map.zero_index = val;
+            }
+            else table_insert(&map.table, codepoint, val);
+        }
+        
+        advance_map->codepoint_to_index = map;
+        advance_map->index_count = index_count;
+        advance_map->advance = push_array(arena, f32, index_count);
+        face->bounds = push_array(arena, Glyph_Bounds, index_count);
+    }
+    
+    //- NOTE(long): Glyph Rasterization
+    if (!error)
+    {
+        // NOTE(long): We can't use FT_LOAD_TARGET_MONO because it requires the raster1 renderer
+        // Not only that, the resulting bitmap is 8 pixels per byte, which makes copying non-trivial
+        u32 load_flags = ft__load_flags(description->parameters.hinting);
+        b32 is_aa_1bit = description->parameters.aa_mode == FaceAntialiasingMode_1BitMono;
+        
+        for (i32 i = 0; i < index_count; ++i)
+        {
+            // NOTE(long): This is a per-glyph error; if fails, just skip to the next glyph
+            if (FT_Load_Glyph(ft_face, bitmaps[i].glyph_index, load_flags))
+                continue;
+            
+            FT_GlyphSlot ft_glyph = ft_face->glyph;
+            Vec2_i32 dim = V2i32(ft_glyph->bitmap.width, ft_glyph->bitmap.rows);
+            bitmaps[i].dim = dim;
+            bitmaps[i].data = push_array(&scratch, u8, dim.x*dim.y);
+            
+            advance_map->advance[i] = f32_ceil32(ft_glyph->advance.x/64.0f);
+            Glyph_Bounds* bounds = face->bounds + i;
+            bounds->xy_off.x0 = (f32)(ft_face->glyph->bitmap_left);
+            bounds->xy_off.y0 = (f32)(met->ascent - ft_face->glyph->bitmap_top);
+            bounds->xy_off.x1 = (f32)(bounds->xy_off.x0 + dim.x);
+            bounds->xy_off.y1 = (f32)(bounds->xy_off.y0 + dim.y);
+            
+            switch (ft_glyph->bitmap.pixel_mode)
+            {
+                case FT_PIXEL_MODE_GRAY:
+                {
+                    u8* src_line = ft_glyph->bitmap.buffer;
+                    if (ft_glyph->bitmap.pitch < 0)
+                        src_line = ft_glyph->bitmap.buffer + (-ft_glyph->bitmap.pitch)*(dim.y - 1);
+                    
+                    u8* dst = bitmaps[i].data;
+                    for (i32 y = 0; y < dim.y; ++y)
+                    {
+                        u8* src = src_line;
+                        for (i32 x = 0; x < dim.x; ++x)
+                        {
+                            u8 pixel = *src++;
+                            if (is_aa_1bit)
+                                pixel = (pixel >= 128) * 255;
+                            *dst++ = pixel;
+                        }
+                        src_line += ft_glyph->bitmap.pitch;
+                    }
+                } break;
+                
+                default: NotImplemented; break;
+            }
+        }
+    }
+    
+    //- NOTE(long): Clean up the library; from this point forward, FreeType is no longer needed
+    if (!init_error)
+        FT_Done_FreeType(ft);
+    
+    //- NOTE(long): Finish metrics calculation after all glyph advances are known
+    if (!error)
+    {
+        met->space_advance = font_get_glyph_advance(advance_map, met, ' ', 0);
+        met->decimal_digit_advance = font_get_max_glyph_advance_range(advance_map, met, '0', '9', 0);
+        met->hex_digit_advance = font_get_max_glyph_advance_range(advance_map, met, 'A', 'F', 0);
+        met->hex_digit_advance = Max(met->hex_digit_advance, met->decimal_digit_advance);
+        
+        met->byte_sub_advances[0] = font_get_glyph_advance(advance_map, met, '\\', 0);
+        met->byte_sub_advances[1] = met->hex_digit_advance;
+        met->byte_sub_advances[2] = met->hex_digit_advance;
+        met->byte_advance = met->byte_sub_advances[0] + met->byte_sub_advances[1] + met->byte_sub_advances[2];
+        
+        met->normal_lowercase_advance = font_get_average_glyph_advance_range(advance_map, met, 'a', 'z', 0);
+        met->normal_uppercase_advance = font_get_average_glyph_advance_range(advance_map, met, 'A', 'Z', 0);
+        met->normal_advance = (26*met->normal_lowercase_advance +
+                               26*met->normal_uppercase_advance +
+                               10*met->decimal_digit_advance)/62.f;
+    }
+    
+    //- NOTE(long): Texture Packing
+    if (!error)
+    {
+        Bad_Rect_Pack pack = {V2i32(256, 256)};
+        for (i32 i = 0; i < index_count; ++i)
+        {
+            Vec2_i32 dim = bitmaps[i].dim;
+            Vec3_i32 p = BRP_Pack(&pack, dim);
+            face->bounds[i].uv = Rf32((f32)p.x, (f32)p.y, (f32)dim.x, (f32)dim.y);
+            face->bounds[i].w = (f32)p.z;
+        }
+        
+        Texture_Kind texture_kind = TextureKind_Mono;
+        u32 texture = graphics_get_texture(pack.dim, face->texture_kind);
+        
+        error = texture == 0;
+        if (!error)
+        {
+            face->texture_kind = texture_kind;
+            face->texture = texture;
+            Vec3_f32 texture_dim = face->texture_dim = V3f32(pack.dim);
+            
+            //- NOTE(long): Upload to GPU
+            for (i32 i = 0; i < index_count; ++i)
+            {
+                Glyph_Bounds* bounds = face->bounds + i; 
+                Bitmap bitmap = bitmaps[i];
+                Vec3_i32 pos = V3i32((i32)bounds->uv.x0, (i32)bounds->uv.y0, (i32)bounds->w);
+                Vec3_i32 dim = V3i32(bitmap.dim.x, bitmap.dim.y, 1);
+                graphics_fill_texture(face->texture_kind, face->texture, pos, dim, bitmap.data);
+                
+                bounds->uv.x1 = (bounds->uv.x0 + bounds->uv.x1)/texture_dim.x;
+                bounds->uv.y1 = (bounds->uv.y0 + bounds->uv.y1)/texture_dim.y;
+                bounds->uv.x0 = (bounds->uv.x0 +             0)/texture_dim.x;
+                bounds->uv.y0 = (bounds->uv.y0 +             0)/texture_dim.y;
+            }
+        }
+    }
+    
+    //- NOTE(long): Clear scratch arena (the bitmaps array is not needed anymore)
+    linalloc_clear(&scratch);
+    
+    //- NOTE(long): If any error occurs, restore the arena to its previous state
+    if (error)
+    {
+        face = 0;
+        end_temp(temp);
+    }
+    
+    return face;
 }
 
 // BOTTOM

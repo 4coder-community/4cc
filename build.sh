@@ -25,7 +25,7 @@ if [ -z "$CC" ]; then
     CC=c++
 fi
 
-CFLAGS="-D_GNU_SOURCE -fPIC -fpermissive -Wno-write-strings -Wno-comment"
+CFLAGS="-std=c++11 -D_GNU_SOURCE -fPIC -fpermissive -Wno-write-strings -Wno-comment"
 CFLAGS="$CFLAGS -Wno-null-dereference -Wno-logical-op-parentheses -Wno-switch"
 CFLAGS="$CFLAGS -I$SRC_ROOT -I$CUSTOM_ROOT"
 

@@ -2,24 +2,49 @@
 
 # Building
 
+## Build script parameter
+
+```
+Usage: build [options]
+
+Options:
+    -m=<string>, --mode=<string>
+        Sets build mode 
+        Available modes:
+            - debug
+            - release
+        Default: debug
+
+    -gl=<string> --gl-api=<string>
+        Sets the graphics API to use
+        Available backends:
+            - OpenGL
+            - DX11 (Windows only)
+        Default: OpenGL
+
+    -s, --symbols
+        Adds debug symbols. Already set by --mode=debug.
+
+    -o, --optimizations
+        Adds optimizations. Already set by --mode=release.
+
+    -h, --help
+        Display this help text and exit
+
+    -v, --verbose
+        Display build debug information like command currentely executing
+
+```
+
 ## Windows
 
 > [!NOTE]
 > 4coder needs the MSVC compiler and windows SDK from the "Desktop development with C++" component. If you don’t have this already, you can download the installer [here](https://visualstudio.microsoft.com/downloads/). Make sure to at least click on "Desktop development with C++" and tick the boxes for MSVC and the Windows SDK.
 
-1. Setup the MSVC toolchain in your environment, this can be done either with the `code/custom/bin/setup_cl_x64.bat` script or by using the development shell in windows terminal
-2. Execute this command from the root of the project (the resulting executable will be under the `build` folder in the root of the repo)
+1. Execute this command from the root of the project (the resulting executable will be under the `build` folder in the root of the repo)
 
-```batch
-cd code && .\bin\build.bat
-```
-
-In addition to the parameter listed below, you can specify which backend to use by passing one of those parameters to the build scripts:
-- `/DWIN32_OPENGL` (default) to use the OpenGL backend.
-- `/DWIN32_DX11` to use the Direct3D 11 backend.
-
-```batch
-cd code && .\bin\build.bat /DWIN32_DX11
+```cmd
+.\build.bat
 ```
 
 ## Linux
@@ -35,7 +60,7 @@ sudo apt install build-essential libx11-dev libxfixes-dev libglx-dev mesa-common
 2. Execute this command from the root of the project (the resulting executable will be under the `build` folder in the root of the repo)
 
 ```sh
-cd code && ./bin/build-linux.sh
+./build.sh
 ```
 
 ## Mac 
@@ -45,27 +70,11 @@ cd code && ./bin/build-linux.sh
 1. Execute this command from the root of the project (the resulting executable will be under the `build` folder in the root of the repo)
 
 ```sh
-cd code && ./bin/build-mac.sh
+./build.sh
+# For M1+ Macs
+arch -arch x86_64 ./build.sh
 ```
 
-### Older Macs, 10.15.7 Catalina
-
-If you are using an older version of mac, such as 10.15.7 Catalina you need to install the realpath command:
-
-1. `$ sudo port install coreutils`
-2. macports names the `realpath` command `grealpath`, so make a symbolic link in order to use build-mac.sh:  
-   `$ sudo ln -s /opt/local/bin/grealpath /opt/local/bin/realpath`
-
-## Build script parameter
-
-The build script accepts a parameter (mutually exclusive):
-- `/DDEV_BUILD` (default value) : build without optimizations.
-   Produces debug symbols.
-   Defines: `FRED_INTERNAL`, `FRED_SUPER`, `DO_CRAZY_EXPENSIVE_ASSERTS` (on Windows) macros.
-- `/DOPT_BUILD` (similar to `build_optimized` script): build with optimizations.
-   Doesn't produce debug symbols.
-   Defines `FRED_SUPER` macro.
-   
 ## API generators
 
 4coder uses several small programs to generate some headers and source files. Those do not run automatically, you must build them and run them when needed (which shouldn't really happen).
